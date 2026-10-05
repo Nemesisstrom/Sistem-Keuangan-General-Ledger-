@@ -10,11 +10,11 @@ return new class extends Migration
     {
         Schema::create('taxes', function (Blueprint $table) {
             $table->id();
-            $table->string('code', 10)->unique(); // Misal: PPN11, PPH21, PPH23
-            $table->string('name'); // PPN Keluaran, PPN Masukan, PPh Pasal 21, dll.
-            $table->enum('category', ['PPN', 'PPh']);
-            $table->decimal('rate', 5, 2); // Persentase pajak, misal: 11.00, 5.00, 2.00
-            $table->foreignId('account_id')->constrained('chart_of_accounts')->restrictOnDelete(); // Akun COA penampung pajak
+            $table->string('code', 20)->unique(); // e.g., PPN-OUT, PPH21, PPH23
+            $table->string('name');
+            $table->decimal('rate', 5, 2); // e.g., 11.00 for PPN 11%
+            $table->enum('type', ['vat_input', 'vat_output', 'pph21', 'pph23', 'pph4_2', 'other']);
+            $table->foreignId('account_id')->constrained('chart_of_accounts')->restrictOnDelete(); // COA Utang/Piutang Pajak
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });

@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('tax_logs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('branch_id')->constrained('branches')->cascadeOnDelete();
-            $table->foreignId('journal_id')->constrained('journals')->cascadeOnDelete();
+            $table->foreignId('journal_entry_id')->constrained('journal_entries')->cascadeOnDelete();
             $table->foreignId('tax_id')->constrained('taxes')->restrictOnDelete();
             $table->enum('type', ['input', 'output']); // Input = PPN Masukan / Pemotongan, Output = PPN Keluaran
             $table->decimal('taxable_amount', 15, 2); // DPP (Dasar Pengenaan Pajak)

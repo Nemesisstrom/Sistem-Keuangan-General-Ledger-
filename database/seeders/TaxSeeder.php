@@ -10,43 +10,39 @@ class TaxSeeder extends Seeder
 {
     public function run(): void
     {
-        $ppnKeluaranAcc = ChartOfAccount::where('code', '2301')->first();
-        $ppnMasukanAcc  = ChartOfAccount::where('code', '1401')->first();
-        $pph21Acc       = ChartOfAccount::where('code', '2302')->first();
-        $pph23Acc       = ChartOfAccount::where('code', '2303')->first();
+        $vatOutputAcc = ChartOfAccount::where('code', '2-1201')->first();
+        $vatInputAcc  = ChartOfAccount::where('code', '1-1301')->first();
+        $pph21Acc     = ChartOfAccount::where('code', '2-1202')->first();
+        $pph23Acc     = ChartOfAccount::where('code', '2-1203')->first();
 
         $taxes = [
             [
-                'code'       => 'PPN-OUT',
-                'name'       => 'PPN Keluaran (11%)',
-                'category'   => 'PPN',
-                'rate'       => 11.00,
-                'account_id' => $ppnKeluaranAcc?->id,
-                'is_active'  => true,
+                'code' => 'PPN-OUT',
+                'name' => 'PPN Keluaran (11%)',
+                'rate' => 11.00,
+                'type' => 'vat_output',
+                'account_id' => $vatOutputAcc?->id,
             ],
             [
-                'code'       => 'PPN-IN',
-                'name'       => 'PPN Masukan (11%)',
-                'category'   => 'PPN',
-                'rate'       => 11.00,
-                'account_id' => $ppnMasukanAcc?->id,
-                'is_active'  => true,
+                'code' => 'PPN-IN',
+                'name' => 'PPN Masukan (11%)',
+                'rate' => 11.00,
+                'type' => 'vat_input',
+                'account_id' => $vatInputAcc?->id,
             ],
             [
-                'code'       => 'PPH21',
-                'name'       => 'PPh Pasal 21 (Gaji)',
-                'category'   => 'PPh',
-                'rate'       => 5.00, // Tarif dasar / fleksibel
+                'code' => 'PPH21',
+                'name' => 'PPh Pasal 21 (Gaji/Honorarium)',
+                'rate' => 5.00, // Rate dasar/efektif
+                'type' => 'pph21',
                 'account_id' => $pph21Acc?->id,
-                'is_active'  => true,
             ],
             [
-                'code'       => 'PPH23',
-                'name'       => 'PPh Pasal 23 (Jasa 2%)',
-                'category'   => 'PPh',
-                'rate'       => 2.00,
+                'code' => 'PPH23',
+                'name' => 'PPh Pasal 23 (Jasa - 2%)',
+                'rate' => 2.00,
+                'type' => 'pph23',
                 'account_id' => $pph23Acc?->id,
-                'is_active'  => true,
             ],
         ];
 

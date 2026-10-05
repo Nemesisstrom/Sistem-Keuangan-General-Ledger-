@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('branches', function (Blueprint $table) {
             $table->id();
-            $table->string('code', 10)->unique(); // Misal: SR1, SR2
+            $table->string('code', 12)->unique(); // Misal: SR1, SR2
             $table->string('name');
             $table->text('address')->nullable();
             $table->string('phone', 20)->nullable();

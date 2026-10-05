@@ -11,13 +11,13 @@ return new class extends Migration
         Schema::create('employees', function (Blueprint $table) {
             $table->id();
             $table->foreignId('branch_id')->constrained('branches')->cascadeOnDelete();
-            $table->string('nik', 20)->unique();
+            $table->string('employee_code', 30)->unique();
             $table->string('name');
             $table->string('email')->nullable();
-            $table->string('position');
-            $table->decimal('basic_salary', 15, 2);
-            $table->string('npwp', 25)->nullable();
-            $table->enum('ptkp_status', ['TK/0', 'TK/1', 'TK/2', 'TK/3', 'K/0', 'K/1', 'K/2', 'K/3'])->default('TK/0');
+            $table->string('phone', 20)->nullable();
+            $table->string('npwp', 30)->nullable();
+            $table->string('ptkp_status', 10)->default('TK/0'); // TK/0, K/0, K/1, dst.
+            $table->decimal('basic_salary', 15, 2)->default(0.00);
             $table->string('bank_name')->nullable();
             $table->string('bank_account_number')->nullable();
             $table->boolean('is_active')->default(true);

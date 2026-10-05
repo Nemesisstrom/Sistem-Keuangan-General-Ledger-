@@ -11,17 +11,17 @@ class BranchSeeder extends Seeder
     {
         $branches = [
             [
-                'code'      => 'SR1',
-                'name'      => 'Cabang Utama - SR1',
-                'address'   => 'Jl. Jendral Sudirman No. 1, Jakarta Central',
-                'phone'     => '021-5550101',
+                'code' => 'SR1',
+                'name' => 'Cabang Utama - SR1 (Jakarta)',
+                'address' => 'Jl. Jend. Sudirman No. 10, Jakarta Selatan',
+                'phone' => '021-5550101',
                 'is_active' => true,
             ],
             [
-                'code'      => 'SR2',
-                'name'      => 'Cabang Pembantu - SR2',
-                'address'   => 'Jl. Raya Bandung No. 88, Bandung',
-                'phone'     => '022-7770202',
+                'code' => 'SR2',
+                'name' => 'Cabang Operasional - SR2 (Surabaya)',
+                'address' => 'Jl. Pemuda No. 45, Surabaya',
+                'phone' => '031-5550202',
                 'is_active' => true,
             ],
         ];
