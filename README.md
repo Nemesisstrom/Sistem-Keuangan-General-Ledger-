@@ -106,14 +106,14 @@ Pengujian database pada konfigurasi bawaan menggunakan SQLite dalam memori. Past
 
 ## Peran Pengguna
 
-Migration pengguna mendefinisikan kategori pengguna berikut:
+Kolom legacy `users.role` tetap memakai kategori yang sudah ditetapkan oleh migration:
 
-- `admin`
+- `superadmin`
 - `admin_branch`
 - `accountant`
 - `hr`
 
-Nilai bawaan kategori pengguna adalah `accountant`. Otorisasi aplikasi menggunakan role dan permission Spatie: `Admin` dapat mengelola akun dan pengguna, sedangkan `Staff` dapat melihat laporan dan menggunakan fitur jurnal.
+Nilai bawaan kolom tersebut adalah `accountant`. Otorisasi untuk UI menggunakan role dan permission Spatie secara terpisah: `Admin` dapat mengelola akun dan pengguna, sedangkan `Staff` dapat melihat laporan dan menggunakan fitur jurnal. Seeder tidak mengubah enum legacy ini, sehingga tetap cocok dengan database yang sudah menjalankan migration sebelumnya.
 
 ## Struktur Direktori
 

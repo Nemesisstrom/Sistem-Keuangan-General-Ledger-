@@ -59,7 +59,6 @@ class RoleAndPermissionSeeder extends Seeder
                 [
                     'name' => 'Administrator Utama',
                     'password' => Hash::make($adminPassword),
-                    'role' => 'admin',
                 ]
             );
 
