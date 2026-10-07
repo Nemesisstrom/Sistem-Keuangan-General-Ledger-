@@ -36,9 +36,14 @@
                     <a href="{{ route('journals.index') }}" class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm {{ request()->routeIs('journals.*') ? 'bg-white/10 text-white' : 'text-emerald-50/65 hover:bg-white/5 hover:text-white' }}">
                         <span class="w-5 text-center">▤</span> Jurnal Umum
                     </a>
-                    <a href="{{ route('accounts.index') }}" class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm {{ request()->routeIs('accounts.*') ? 'bg-white/10 text-white' : 'text-emerald-50/65 hover:bg-white/5 hover:text-white' }}">
-                        <span class="w-5 text-center">▦</span> Daftar Akun
-                    </a>
+                    @role('Admin')
+                        <a href="{{ route('accounts.index') }}" class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm {{ request()->routeIs('accounts.*') ? 'bg-white/10 text-white' : 'text-emerald-50/65 hover:bg-white/5 hover:text-white' }}">
+                            <span class="w-5 text-center">▦</span> Daftar Akun
+                        </a>
+                        <a href="{{ route('users.index') }}" class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm {{ request()->routeIs('users.*') ? 'bg-white/10 text-white' : 'text-emerald-50/65 hover:bg-white/5 hover:text-white' }}">
+                            <span class="w-5 text-center">♙</span> Pengguna
+                        </a>
+                    @endrole
                 </nav>
 
                 <p class="mb-3 mt-8 px-3 text-[10px] font-bold uppercase tracking-[.18em] text-emerald-100/45">Laporan</p>
@@ -91,7 +96,10 @@
                 <nav class="flex gap-1 overflow-x-auto border-t border-slate-100 px-4 py-2 text-xs lg:hidden">
                     <a class="whitespace-nowrap rounded-lg px-3 py-2 hover:bg-slate-100" href="{{ route('dashboard') }}">Ringkasan</a>
                     <a class="whitespace-nowrap rounded-lg px-3 py-2 hover:bg-slate-100" href="{{ route('journals.index') }}">Jurnal</a>
-                    <a class="whitespace-nowrap rounded-lg px-3 py-2 hover:bg-slate-100" href="{{ route('accounts.index') }}">Daftar Akun</a>
+                    @role('Admin')
+                        <a class="whitespace-nowrap rounded-lg px-3 py-2 hover:bg-slate-100" href="{{ route('accounts.index') }}">Daftar Akun</a>
+                        <a class="whitespace-nowrap rounded-lg px-3 py-2 hover:bg-slate-100" href="{{ route('users.index') }}">Pengguna</a>
+                    @endrole
                     <a class="whitespace-nowrap rounded-lg px-3 py-2 hover:bg-slate-100" href="{{ route('reports.general-ledger') }}">Buku Besar</a>
                     <a class="whitespace-nowrap rounded-lg px-3 py-2 hover:bg-slate-100" href="{{ route('reports.profit-loss') }}">Laba Rugi</a>
                     <a class="whitespace-nowrap rounded-lg px-3 py-2 hover:bg-slate-100" href="{{ route('reports.balance-sheet') }}">Neraca</a>

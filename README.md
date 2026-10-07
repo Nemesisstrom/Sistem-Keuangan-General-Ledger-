@@ -73,7 +73,11 @@ Jalankan migration dan seeder:
 php artisan migrate --seed
 ```
 
-Perintah tersebut menjalankan migration serta seeder yang terdaftar, termasuk data cabang dan bagan akun. Hindari `migrate:fresh` pada database yang berisi data penting karena perintah itu menghapus tabel sebelum membuatnya kembali.
+Perintah tersebut menjalankan migration serta seeder yang terdaftar, termasuk data cabang, bagan akun, dan role/permission. Pengguna yang mendaftar melalui aplikasi otomatis mendapat role `Staff`.
+
+Untuk membuat akun administrator awal, isi `SEED_ADMIN_EMAIL` dan `SEED_ADMIN_PASSWORD` pada `.env` sebelum menjalankan seeder. Kata sandi administrator harus minimal 12 karakter. Kedua nilai harus diisi bersama; jika tidak, seeder hanya membuat role dan permission tanpa akun dengan kata sandi bawaan.
+
+Hindari `migrate:fresh` pada database yang berisi data penting karena perintah itu menghapus tabel sebelum membuatnya kembali.
 
 Bangun aset frontend dan jalankan server:
 
@@ -102,14 +106,14 @@ Pengujian database pada konfigurasi bawaan menggunakan SQLite dalam memori. Past
 
 ## Peran Pengguna
 
-Migration pengguna mendefinisikan peran berikut:
+Migration pengguna mendefinisikan kategori pengguna berikut:
 
-- `superadmin`
+- `admin`
 - `admin_branch`
 - `accountant`
 - `hr`
 
-Nilai bawaan untuk peran pengguna adalah `accountant`. Pembatasan akses perlu diperiksa pada route dan controller yang digunakan; keberadaan peran pada database tidak dengan sendirinya menjamin seluruh akses sudah dibatasi sesuai peran.
+Nilai bawaan kategori pengguna adalah `accountant`. Otorisasi aplikasi menggunakan role dan permission Spatie: `Admin` dapat mengelola akun dan pengguna, sedangkan `Staff` dapat melihat laporan dan menggunakan fitur jurnal.
 
 ## Struktur Direktori
 

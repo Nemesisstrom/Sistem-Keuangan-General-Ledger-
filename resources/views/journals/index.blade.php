@@ -12,7 +12,11 @@
             <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900">Jurnal transaksi</h1>
             <p class="mt-1 text-sm text-slate-500">Seluruh entri jurnal yang telah dicatat ke buku besar.</p>
         </div>
-        <a href="{{ route('journals.create') }}" class="inline-flex items-center justify-center gap-2 rounded-xl bg-[#174735] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#103626]"><span class="text-lg leading-none">+</span> Entri jurnal</a>
+        <div class="flex flex-wrap gap-2">
+            <a href="{{ route('journals.export.excel', request()->query()) }}" class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">Ekspor Excel</a>
+            <a href="{{ route('journals.export.pdf', request()->query()) }}" class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">Ekspor PDF</a>
+            <a href="{{ route('journals.create') }}" class="inline-flex items-center justify-center gap-2 rounded-xl bg-[#174735] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#103626]"><span class="text-lg leading-none">+</span> Entri jurnal</a>
+        </div>
     </div>
 
     <div class="grid gap-3 sm:grid-cols-3">

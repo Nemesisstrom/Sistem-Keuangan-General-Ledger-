@@ -4,75 +4,83 @@ namespace App\Exports;
 
 use App\Models\ChartOfAccount;
 use App\Models\JournalItem;
-use Illuminate\Support\Collection; // 1. Import Collection
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 
 class IncomeStatementExport implements FromCollection, WithHeadings
 {
-    protected $startDate;
-    protected $endDate;
+    private string $startDate;
 
-    public function __construct($startDate = null, $endDate = null)
+    private string $endDate;
+
+    public function __construct(?string $startDate = null, ?string $endDate = null)
     {
-        $this->startDate = $startDate ?? date('Y-m-01');
-        $this->endDate   = $endDate ?? date('Y-m-t');
+        $this->startDate = $startDate ?? now()->startOfMonth()->toDateString();
+        $this->endDate = $endDate ?? now()->endOfMonth()->toDateString();
     }
 
-    /**
-     * Tambahkan ": Collection" sebagai return type agar cocok dengan interface FromCollection
-     */
     public function collection(): Collection
     {
-        $data = collect();
+        $accountBalances = JournalItem::query()
+            ->select(
+                'chart_of_accounts.id',
+                'chart_of_accounts.type',
+                'chart_of_accounts.normal_balance',
+                DB::raw('SUM(journal_items.debit) as total_debit'),
+                DB::raw('SUM(journal_items.credit) as total_credit')
+            )
+            ->join('chart_of_accounts', 'journal_items.account_id', '=', 'chart_of_accounts.id')
+            ->join('journal_entries', 'journal_items.journal_entry_id', '=', 'journal_entries.id')
+            ->whereIn('chart_of_accounts.type', ['revenue', 'expense'])
+            ->whereBetween('journal_entries.date', [$this->startDate, $this->endDate])
+            ->where('journal_entries.status', 'posted')
+            ->groupBy(
+                'chart_of_accounts.id',
+                'chart_of_accounts.type',
+                'chart_of_accounts.normal_balance'
+            )
+            ->get()
+            ->keyBy('id');
 
-        // 1. Ambil Pendapatan
-        $revenues = ChartOfAccount::where('account_type', 'Revenue')->get();
-        $totalRevenue = 0;
+        $accounts = ChartOfAccount::query()
+            ->whereIn('type', ['revenue', 'expense'])
+            ->orderBy('code')
+            ->get();
 
-        $data->push(['-- PENDAPATAN --', '', '']);
-        foreach ($revenues as $rev) {
-            $credit = JournalItem::where('account_id', $rev->id)
-                ->whereHas('journal', fn($q) => $q->whereBetween('transaction_date', [$this->startDate, $this->endDate]))
-                ->sum('credit');
-            $debit = JournalItem::where('account_id', $rev->id)
-                ->whereHas('journal', fn($q) => $q->whereBetween('transaction_date', [$this->startDate, $this->endDate]))
-                ->sum('debit');
+        $rows = collect();
+        $totalRevenue = 0.0;
+        $totalExpense = 0.0;
 
-            $amount = $credit - $debit;
+        $rows->push(['-- PENDAPATAN --', '', '']);
+        foreach ($accounts->where('type', 'revenue') as $account) {
+            $balance = $accountBalances->get($account->id);
+            $debit = (float) ($balance->total_debit ?? 0);
+            $credit = (float) ($balance->total_credit ?? 0);
+            $amount = $account->normal_balance === 'credit' ? $credit - $debit : $debit - $credit;
             $totalRevenue += $amount;
 
-            $data->push([$rev->account_code, $rev->account_name, $amount]);
+            $rows->push([$account->code, $account->name, $amount]);
         }
-        $data->push(['TOTAL PENDAPATAN', '', $totalRevenue]);
-        $data->push(['', '', '']); // Baris Kosong
+        $rows->push(['TOTAL PENDAPATAN', '', $totalRevenue]);
+        $rows->push(['', '', '']);
 
-        // 2. Ambil Beban
-        $expenses = ChartOfAccount::where('account_type', 'Expense')->get();
-        $totalExpense = 0;
-
-        $data->push(['-- BEBAN OPERASIONAL --', '', '']);
-        foreach ($expenses as $exp) {
-            $debit = JournalItem::where('account_id', $exp->id)
-                ->whereHas('journal', fn($q) => $q->whereBetween('transaction_date', [$this->startDate, $this->endDate]))
-                ->sum('debit');
-            $credit = JournalItem::where('account_id', $exp->id)
-                ->whereHas('journal', fn($q) => $q->whereBetween('transaction_date', [$this->startDate, $this->endDate]))
-                ->sum('credit');
-
-            $amount = $debit - $credit;
+        $rows->push(['-- BEBAN OPERASIONAL --', '', '']);
+        foreach ($accounts->where('type', 'expense') as $account) {
+            $balance = $accountBalances->get($account->id);
+            $debit = (float) ($balance->total_debit ?? 0);
+            $credit = (float) ($balance->total_credit ?? 0);
+            $amount = $account->normal_balance === 'credit' ? $credit - $debit : $debit - $credit;
             $totalExpense += $amount;
 
-            $data->push([$exp->account_code, $exp->account_name, $amount]);
+            $rows->push([$account->code, $account->name, $amount]);
         }
-        $data->push(['TOTAL BEBAN', '', $totalExpense]);
-        $data->push(['', '', '']);
+        $rows->push(['TOTAL BEBAN', '', $totalExpense]);
+        $rows->push(['', '', '']);
+        $rows->push(['LABA / RUGI BERSIH', '', $totalRevenue - $totalExpense]);
 
-        // 3. Laba Rugi Bersih
-        $netProfit = $totalRevenue - $totalExpense;
-        $data->push(['LABA / RUGI BERSIH', '', $netProfit]);
-
-        return $data;
+        return $rows;
     }
 
     public function headings(): array

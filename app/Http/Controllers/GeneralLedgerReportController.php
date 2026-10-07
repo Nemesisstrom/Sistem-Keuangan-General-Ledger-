@@ -6,7 +6,6 @@ use App\Models\Branch;
 use App\Models\ChartOfAccount;
 use App\Models\JournalItem;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Schema;
 
 class GeneralLedgerReportController extends Controller
 {
@@ -26,7 +25,7 @@ class GeneralLedgerReportController extends Controller
 
         $branches = Branch::where('is_active', true)->get();
         $accounts = ChartOfAccount::where('is_active', true)
-            ->orderBy('account_code')
+            ->orderBy('code')
             ->get();
 
         $selectedAccount = null;
@@ -37,14 +36,9 @@ class GeneralLedgerReportController extends Controller
             $selectedAccount = ChartOfAccount::findOrFail($accountId);
 
             // 1. Hitung Saldo Awal (Transaksi sebelum start_date)
-            $previousQuery = JournalItem::whereHas('journal', function ($q) use ($branchId, $startDate) {
-                $q->where('transaction_date', '<', $startDate);
-
-                // Tambahkan filter status jika kolom status tersedia
-                if (\Schema::hasColumn('journals', 'status')) {
-                    $q->where('status', 'posted');
-                }
-
+            $previousQuery = JournalItem::whereHas('journalEntry', function ($q) use ($branchId, $startDate) {
+                $q->where('date', '<', $startDate)
+                    ->where('status', 'posted');
                 if ($branchId) {
                     $q->where('branch_id', $branchId);
                 }
@@ -61,14 +55,10 @@ class GeneralLedgerReportController extends Controller
             }
 
             // 2. Ambil Transaksi Mutasi Buku Besar pada Periode Terpilih
-            $journalItems = JournalItem::with(['journal.branch', 'journal'])
-                ->whereHas('journal', function ($q) use ($branchId, $startDate, $endDate) {
-                    $q->whereBetween('transaction_date', [$startDate, $endDate]);
-
-                    if (\Schema::hasColumn('journals', 'status')) {
-                        $q->where('status', 'posted');
-                    }
-
+            $journalItems = JournalItem::with(['journalEntry.branch', 'journalEntry'])
+                ->whereHas('journalEntry', function ($q) use ($branchId, $startDate, $endDate) {
+                    $q->whereBetween('date', [$startDate, $endDate])
+                        ->where('status', 'posted');
                     if ($branchId) {
                         $q->where('branch_id', $branchId);
                     }
@@ -76,7 +66,7 @@ class GeneralLedgerReportController extends Controller
                 ->where('account_id', $accountId)
                 ->get()
                 ->sortBy(function ($item) {
-                    return $item->journal->transaction_date . '-' . $item->journal->id;
+                    return $item->journalEntry->date . '-' . $item->journalEntry->id;
                 });
         }
 

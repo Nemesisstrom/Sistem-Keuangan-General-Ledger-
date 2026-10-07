@@ -4,18 +4,27 @@ use App\Models\Branch;
 use App\Models\ChartOfAccount;
 use App\Models\Journal;
 use App\Models\User;
+use Database\Seeders\RoleAndPermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 if (extension_loaded('pdo_sqlite')) {
     uses(RefreshDatabase::class);
 }
 
+test('login and registration pages render from the auth views', function () {
+    $this->withoutVite();
+    $this->get('/login')->assertOk();
+    $this->get('/register')->assertOk();
+});
+
 test('core general ledger pages render for authenticated users', function () {
     if (! extension_loaded('pdo_sqlite')) {
         $this->markTestSkipped('The PDO SQLite driver is required for database-backed feature tests.');
     }
 
+    $this->seed(RoleAndPermissionSeeder::class);
     $this->user = User::factory()->create();
+    $this->user->assignRole('Admin');
     $this->actingAs($this->user);
 
     foreach ([
@@ -24,6 +33,7 @@ test('core general ledger pages render for authenticated users', function () {
         '/journals/create',
         '/accounts',
         '/accounts/create',
+        '/users',
         '/reports/general-ledger',
         '/reports/profit-loss',
         '/reports/balance-sheet',
@@ -37,7 +47,9 @@ test('journal entry form posts a balanced entry using the migrated schema', func
         $this->markTestSkipped('The PDO SQLite driver is required for database-backed feature tests.');
     }
 
+    $this->seed(RoleAndPermissionSeeder::class);
     $this->user = User::factory()->create();
+    $this->user->assignRole('Admin');
     $this->actingAs($this->user);
 
     $branch = Branch::create([
@@ -86,4 +98,14 @@ test('journal entry form posts a balanced entry using the migrated schema', func
         'account_id' => $cash->id,
         'debit' => '1000000.00',
     ]);
+
+    $this->get(route('journals.index', ['start_date' => '2026-10-01']))
+        ->assertOk();
+
+    $this->get(route('reports.general-ledger', [
+        'branch_id' => $branch->id,
+        'account_id' => $cash->id,
+        'start_date' => '2026-10-07',
+        'end_date' => '2026-10-07',
+    ]))->assertOk();
 });

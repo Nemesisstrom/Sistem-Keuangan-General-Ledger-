@@ -31,12 +31,12 @@ class JournalExport implements FromQuery, WithHeadings, WithMapping
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
                     $q->where('description', 'like', "%{$this->search}%")
-                      ->orWhere('journal_number', 'like', "%{$this->search}%");
+                      ->orWhere('entry_number', 'like', "%{$this->search}%");
                 });
             })
-            ->when($this->startDate, fn($q) => $q->whereDate('transaction_date', '>=', $this->startDate))
-            ->when($this->endDate, fn($q) => $q->whereDate('transaction_date', '<=', $this->endDate))
-            ->latest('transaction_date');
+            ->when($this->startDate, fn ($q) => $q->whereDate('date', '>=', $this->startDate))
+            ->when($this->endDate, fn ($q) => $q->whereDate('date', '<=', $this->endDate))
+            ->latest('date');
     }
 
     public function headings(): array
@@ -57,11 +57,11 @@ class JournalExport implements FromQuery, WithHeadings, WithMapping
         $rows = [];
         foreach ($journal->items as $item) {
             $rows[] = [
-                $journal->journal_number,
-                $journal->transaction_date,
+                $journal->entry_number,
+                $journal->date,
                 $journal->description,
-                $item->account?->account_code ?? '-',
-                $item->account?->account_name ?? '-',
+                $item->account?->code ?? '-',
+                $item->account?->name ?? '-',
                 $item->debit,
                 $item->credit,
             ];

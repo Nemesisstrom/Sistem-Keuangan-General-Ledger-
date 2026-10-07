@@ -7,6 +7,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GeneralLedgerReportController;
 use App\Http\Controllers\JournalController;
 use App\Http\Controllers\ProfitLossReportController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 // 1. Rute Pengunjung (Guest)
@@ -31,8 +32,13 @@ Route::middleware(['auth'])->group(function () {
     // Hanya Admin yang bisa mengelola Master Chart of Accounts (CoA)
     Route::middleware(['role:Admin'])->group(function () {
         Route::resource('accounts', ChartOfAccountController::class);
+        Route::resource('users', UserController::class)->except(['show']);
     });
 
+
+    // General Journal Entry & Export
+    Route::get('/journals/export/excel', [JournalController::class, 'exportExcel'])->name('journals.export.excel');
+    Route::get('/journals/export/pdf', [JournalController::class, 'exportPdf'])->name('journals.export.pdf');
 
     // General Journal Entry
     Route::resource('journals', JournalController::class)->only([
@@ -41,10 +47,6 @@ Route::middleware(['auth'])->group(function () {
         'store',
         'show',
     ]);
-
-    // General Journal Entry & Export
-    Route::get('/journals/export/excel', [JournalController::class, 'exportExcel'])->name('journals.export.excel');
-    Route::get('/journals/export/pdf', [JournalController::class, 'exportPdf'])->name('journals.export.pdf');
 
 
     // Financial Reports (Memerlukan izin 'view-reports')

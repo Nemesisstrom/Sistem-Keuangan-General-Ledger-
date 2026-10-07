@@ -26,16 +26,16 @@ class JournalController extends Controller
         ]);
 
         $journals = Journal::with(['branch', 'items.account', 'creator'])
-            ->when($request->filled('start_date'), fn ($query) => $query->whereDate('transaction_date', '>=', $request->start_date))
-            ->when($request->filled('end_date'), fn ($query) => $query->whereDate('transaction_date', '<=', $request->end_date))
+            ->when($request->filled('start_date'), fn ($query) => $query->whereDate('date', '>=', $request->start_date))
+            ->when($request->filled('end_date'), fn ($query) => $query->whereDate('date', '<=', $request->end_date))
             ->when($request->filled('status'), fn ($query) => $query->where('status', $request->status))
             ->when($request->filled('search'), function ($query) use ($request) {
                 $search = $request->string('search')->trim()->toString();
                 $query->where(fn ($journals) => $journals
-                    ->where('journal_number', 'like', "%{$search}%")
+                    ->where('entry_number', 'like', "%{$search}%")
                     ->orWhere('description', 'like', "%{$search}%"));
             })
-            ->latest('transaction_date')
+            ->latest('date')
             ->latest('id')
             ->paginate(15)
             ->withQueryString();
@@ -54,7 +54,7 @@ class JournalController extends Controller
     {
         $validated = $request->validate([
             'branch_id'           => ['required', 'exists:branches,id'],
-            'transaction_date'    => ['required', 'date'],
+            'date'                => ['required', 'date'],
             'description'          => ['required', 'string', 'max:255'],
             'items'               => ['required', 'array', 'min:2'],
             'items.*.account_id'  => ['required', 'exists:chart_of_accounts,id'],
@@ -107,14 +107,16 @@ class JournalController extends Controller
         $startDate = $request->input('start_date');
         $endDate   = $request->input('end_date');
 
-        $journals = Journal::with('items.account')
+        $journals = Journal::with(['branch', 'items.account'])
             ->when($search, function ($query) use ($search) {
-                $query->where('description', 'like', "%{$search}%")
-                    ->orWhere('journal_number', 'like', "%{$search}%");
+                $query->where(function ($query) use ($search) {
+                    $query->where('description', 'like', "%{$search}%")
+                        ->orWhere('entry_number', 'like', "%{$search}%");
+                });
             })
-            ->when($startDate, fn($q) => $q->whereDate('transaction_date', '>=', $startDate))
-            ->when($endDate, fn($q) => $q->whereDate('transaction_date', '<=', $endDate))
-            ->latest('transaction_date')
+            ->when($startDate, fn ($q) => $q->whereDate('date', '>=', $startDate))
+            ->when($endDate, fn ($q) => $q->whereDate('date', '<=', $endDate))
+            ->latest('date')
             ->get();
 
         $pdf = Pdf::loadView('journals.pdf', compact('journals'));
