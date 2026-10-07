@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Branch;
-use App\Models\ChartOfAccount;
 use App\Models\JournalItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -12,24 +11,29 @@ class ProfitLossReportController extends Controller
 {
     public function index(Request $request)
     {
-        $branchId = $request->input('branch_id'); // null = Konsolidasi
-        $startDate = $request->input('start_date', now()->startOfMonth()->toDateString());
-        $endDate = $request->input('end_date', now()->endOfMonth()->toDateString());
+        $filters = $request->validate([
+            'branch_id' => ['nullable', 'exists:branches,id'],
+            'start_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
+        ]);
+        $branchId = $filters['branch_id'] ?? null;
+        $startDate = $filters['start_date'] ?? now()->startOfMonth()->toDateString();
+        $endDate = $filters['end_date'] ?? now()->endOfMonth()->toDateString();
 
         $branches = Branch::where('is_active', true)->get();
         $selectedBranch = $branchId ? Branch::find($branchId) : null;
 
         // Ambil akumulasi saldo per Akun COA tipe Revenue dan Expense pada periode tanggal
         $accountBalances = JournalItem::select(
-                'chart_of_accounts.id',
-                'chart_of_accounts.code',
-                'chart_of_accounts.name',
-                'chart_of_accounts.type',
-                'chart_of_accounts.normal_balance',
-                'chart_of_accounts.parent_id',
-                DB::raw('SUM(journal_items.debit) as total_debit'),
-                DB::raw('SUM(journal_items.credit) as total_credit')
-            )
+            'chart_of_accounts.id',
+            'chart_of_accounts.code',
+            'chart_of_accounts.name',
+            'chart_of_accounts.type',
+            'chart_of_accounts.normal_balance',
+            'chart_of_accounts.parent_id',
+            DB::raw('SUM(journal_items.debit) as total_debit'),
+            DB::raw('SUM(journal_items.credit) as total_credit')
+        )
             ->join('chart_of_accounts', 'journal_items.account_id', '=', 'chart_of_accounts.id')
             ->join('journal_entries', 'journal_items.journal_entry_id', '=', 'journal_entries.id')
             ->whereIn('chart_of_accounts.type', ['revenue', 'expense'])
@@ -93,14 +97,4 @@ class ProfitLossReportController extends Controller
             'netProfit'
         ));
     }
-
-    public function render()
-{
-    return view('livewire.journal-form', [
-        'accounts' => ChartOfAccount::where('is_active', true)
-            ->whereNotNull('parent_id')
-            ->orderBy('code')
-            ->get(),
-    ]);
-}
 }

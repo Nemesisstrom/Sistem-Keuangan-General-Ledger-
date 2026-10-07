@@ -11,11 +11,11 @@ class JournalItem extends Model
     use HasFactory;
 
     protected $fillable = [
-        'journal_id',
+        'journal_entry_id',
         'account_id',
         'debit',
         'credit',
-        'note',
+        'description',
     ];
 
     protected $casts = [
@@ -25,7 +25,12 @@ class JournalItem extends Model
 
     public function journal(): BelongsTo
     {
-        return $this->belongsTo(Journal::class);
+        return $this->belongsTo(Journal::class, 'journal_entry_id');
+    }
+
+    public function journalEntry(): BelongsTo
+    {
+        return $this->journal();
     }
 
     public function account(): BelongsTo

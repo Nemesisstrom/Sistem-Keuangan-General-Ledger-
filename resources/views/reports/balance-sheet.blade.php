@@ -1,4 +1,8 @@
-<x-app-layout>
+@extends('layouts.app')
+@section('title', 'Neraca')
+@section('page-title', 'Neraca keuangan')
+@section('page-subtitle', 'Posisi aset, liabilitas, dan ekuitas pada tanggal terpilih.')
+@section('content')
     <div class="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <!-- Header Page -->
         <div class="flex justify-between items-center mb-6">
@@ -72,7 +76,7 @@
                 <h2 class="text-xl font-bold uppercase tracking-wider text-gray-900">SISTEM INFORMASI KEUANGAN</h2>
                 <h3 class="text-lg font-semibold text-gray-700">LAPORAN NERACA KEUANGAN</h3>
                 <p class="text-sm text-gray-500">
-                    Per Tanggal: {{ \Carbon\Carbon::parse($asOfDate)->isoFormat('D MMMM Y') }}
+                    Per Tanggal: {{ \Carbon\Carbon::parse($asOfDate)->locale('id')->isoFormat('D MMMM Y') }}
                 </p>
             </div>
 
@@ -183,4 +187,4 @@
             </div>
         </div>
     </div>
-</x-app-layout>
+@endsection

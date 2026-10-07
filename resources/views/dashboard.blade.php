@@ -142,10 +142,10 @@
             <tbody class="divide-y divide-slate-100">
                 @forelse($recentJournals ?? [] as $journal)
                     <tr class="hover:bg-slate-50/80 transition-colors">
-                        <td class="px-6 py-4 font-semibold text-indigo-600">{{ $journal->journal_number }}</td>
-                        <td class="px-6 py-4 text-slate-500 text-xs">{{ $journal->transaction_date }}</td>
+                        <td class="px-6 py-4 font-semibold text-indigo-600">{{ $journal->entry_number }}</td>
+                        <td class="px-6 py-4 text-slate-500 text-xs">{{ $journal->date?->format('d/m/Y') }}</td>
                         <td class="px-6 py-4 text-slate-800 font-medium">{{ $journal->description }}</td>
-                        <td class="px-6 py-4 text-right font-semibold text-slate-800">Rp {{ number_format($journal->total_amount, 0, ',', '.') }}</td>
+                        <td class="px-6 py-4 text-right font-semibold text-slate-800">Rp {{ number_format($journal->items->sum('debit'), 0, ',', '.') }}</td>
                         <td class="px-6 py-4 text-center">
                             <span class="px-2.5 py-1 text-xs font-semibold bg-emerald-50 text-emerald-700 rounded-md border border-emerald-100">POSTED</span>
                         </td>

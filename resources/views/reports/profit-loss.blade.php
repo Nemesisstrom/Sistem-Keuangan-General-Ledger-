@@ -1,4 +1,8 @@
-<x-app-layout>
+@extends('layouts.app')
+@section('title', 'Laporan Laba Rugi')
+@section('page-title', 'Laporan laba rugi')
+@section('page-subtitle', 'Ringkasan kinerja pendapatan dan beban dalam periode terpilih.')
+@section('content')
     <div class="max-w-5xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <!-- Header Page -->
         <div class="flex justify-between items-center mb-6">
@@ -57,7 +61,7 @@
                 <h2 class="text-xl font-bold uppercase tracking-wider text-gray-900">SISTEM INFORMASI KEUANGAN</h2>
                 <h3 class="text-lg font-semibold text-gray-700">LAPORAN LABA RUGI</h3>
                 <p class="text-sm text-gray-500">
-                    Periode: {{ \Carbon\Carbon::parse($startDate)->isoFormat('D MMMM Y') }} s/d {{ \Carbon\Carbon::parse($endDate)->isoFormat('D MMMM Y') }}
+                    Periode: {{ \Carbon\Carbon::parse($startDate)->locale('id')->isoFormat('D MMMM Y') }} s/d {{ \Carbon\Carbon::parse($endDate)->locale('id')->isoFormat('D MMMM Y') }}
                 </p>
             </div>
 
@@ -137,4 +141,4 @@
             </div>
         </div>
     </div>
-</x-app-layout>
+@endsection

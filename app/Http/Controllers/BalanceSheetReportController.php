@@ -11,22 +11,26 @@ class BalanceSheetReportController extends Controller
 {
     public function index(Request $request)
     {
-        $branchId = $request->input('branch_id'); // null = Konsolidasi
-        $asOfDate = $request->input('as_of_date', now()->toDateString());
+        $filters = $request->validate([
+            'branch_id' => ['nullable', 'exists:branches,id'],
+            'as_of_date' => ['nullable', 'date'],
+        ]);
+        $branchId = $filters['branch_id'] ?? null;
+        $asOfDate = $filters['as_of_date'] ?? now()->toDateString();
 
         $branches = Branch::where('is_active', true)->get();
         $selectedBranch = $branchId ? Branch::find($branchId) : null;
 
         // 1. Ambil Akumulasi Saldo Akun Aset, Kewajiban, dan Ekuitas per Tanggal Neraca
         $accountBalances = JournalItem::select(
-                'chart_of_accounts.id',
-                'chart_of_accounts.code',
-                'chart_of_accounts.name',
-                'chart_of_accounts.type',
-                'chart_of_accounts.normal_balance',
-                DB::raw('SUM(journal_items.debit) as total_debit'),
-                DB::raw('SUM(journal_items.credit) as total_credit')
-            )
+            'chart_of_accounts.id',
+            'chart_of_accounts.code',
+            'chart_of_accounts.name',
+            'chart_of_accounts.type',
+            'chart_of_accounts.normal_balance',
+            DB::raw('SUM(journal_items.debit) as total_debit'),
+            DB::raw('SUM(journal_items.credit) as total_credit')
+        )
             ->join('chart_of_accounts', 'journal_items.account_id', '=', 'chart_of_accounts.id')
             ->join('journal_entries', 'journal_items.journal_entry_id', '=', 'journal_entries.id')
             ->whereIn('chart_of_accounts.type', ['asset', 'liability', 'equity'])
@@ -47,11 +51,11 @@ class BalanceSheetReportController extends Controller
 
         // 2. Hitung Laba Tahun Berjalan (Net Income YTD) dari Akun Revenue & Expense
         $incomeStatementItems = JournalItem::select(
-                'chart_of_accounts.type',
-                'chart_of_accounts.normal_balance',
-                DB::raw('SUM(journal_items.debit) as total_debit'),
-                DB::raw('SUM(journal_items.credit) as total_credit')
-            )
+            'chart_of_accounts.type',
+            'chart_of_accounts.normal_balance',
+            DB::raw('SUM(journal_items.debit) as total_debit'),
+            DB::raw('SUM(journal_items.credit) as total_credit')
+        )
             ->join('chart_of_accounts', 'journal_items.account_id', '=', 'chart_of_accounts.id')
             ->join('journal_entries', 'journal_items.journal_entry_id', '=', 'journal_entries.id')
             ->whereIn('chart_of_accounts.type', ['revenue', 'expense'])
@@ -86,7 +90,9 @@ class BalanceSheetReportController extends Controller
                 ? ($item->total_debit - $item->total_credit)
                 : ($item->total_credit - $item->total_debit);
 
-            if ($netAmount == 0) continue;
+            if ($netAmount == 0) {
+                continue;
+            }
 
             $data = (object) [
                 'code' => $item->code,

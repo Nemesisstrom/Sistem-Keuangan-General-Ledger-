@@ -4,94 +4,99 @@ namespace App\Http\Controllers;
 
 use App\Models\ChartOfAccount;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class ChartOfAccountController extends Controller
 {
-    /**
-     * Tampilkan semua daftar Chart of Accounts.
-     */
     public function index(Request $request)
     {
-        $accounts = ChartOfAccount::query()
-            ->when($request->type, fn($q) => $q->where('type', $request->type))
-            ->orderBy('code', 'asc')
-            ->get();
+        $request->validate([
+            'type' => ['nullable', Rule::in(['asset', 'liability', 'equity', 'revenue', 'expense'])],
+            'search' => ['nullable', 'string', 'max:100'],
+        ]);
 
-        return response()->json([
-            'status' => 'success',
-            'data'   => $accounts
+        $accounts = ChartOfAccount::query()
+            ->with('parent')
+            ->withCount('journalItems')
+            ->when($request->filled('type'), fn ($query) => $query->where('type', $request->type))
+            ->when($request->filled('search'), function ($query) use ($request) {
+                $search = $request->string('search')->trim()->toString();
+                $query->where(fn ($accounts) => $accounts
+                    ->where('code', 'like', "%{$search}%")
+                    ->orWhere('name', 'like', "%{$search}%"));
+            })
+            ->orderBy('code')
+            ->paginate(15)
+            ->withQueryString();
+
+        return view('accounts.index', compact('accounts'));
+    }
+
+    public function create()
+    {
+        return view('accounts.create', [
+            'account' => new ChartOfAccount,
+            'parents' => ChartOfAccount::orderBy('code')->get(),
         ]);
     }
 
-    /**
-     * Simpan akun baru.
-     */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'code'           => 'required|string|unique:chart_of_accounts,code',
-            'name'           => 'required|string|max:255',
-            'type'           => 'required|string|in:asset,liability,equity,revenue,expense,cost_of_goods_sold',
-            'normal_balance' => 'required|string|in:debit,credit',
-            'is_active'      => 'boolean',
-        ]);
+        $account = ChartOfAccount::create($this->validatedData($request));
 
-        $account = ChartOfAccount::create($validated);
-
-        return response()->json([
-            'message' => 'Akun COA berhasil dibuat.',
-            'data'    => $account
-        ], 201);
+        return redirect()->route('accounts.show', $account)
+            ->with('success', 'Akun berhasil ditambahkan.');
     }
 
-    /**
-     * Detail informasi akun.
-     */
-    public function show(ChartOfAccount $chartOfAccount)
+    public function show(ChartOfAccount $account)
     {
-        return response()->json([
-            'status' => 'success',
-            'data'   => $chartOfAccount
+        $account->load(['parent', 'children'])
+            ->loadCount('journalItems');
+
+        return view('accounts.show', compact('account'));
+    }
+
+    public function edit(ChartOfAccount $account)
+    {
+        return view('accounts.edit', [
+            'account' => $account,
+            'parents' => ChartOfAccount::where('id', '!=', $account->id)->orderBy('code')->get(),
         ]);
     }
 
-    /**
-     * Perbarui akun.
-     */
-    public function update(Request $request, ChartOfAccount $chartOfAccount)
+    public function update(Request $request, ChartOfAccount $account)
     {
-        $validated = $request->validate([
-            'code'           => 'required|string|unique:chart_of_accounts,code,' . $chartOfAccount->id,
-            'name'           => 'required|string|max:255',
-            'type'           => 'required|string|in:asset,liability,equity,revenue,expense,cost_of_goods_sold',
-            'normal_balance' => 'required|string|in:debit,credit',
-            'is_active'      => 'boolean',
-        ]);
+        $account->update($this->validatedData($request, $account));
 
-        $chartOfAccount->update($validated);
-
-        return response()->json([
-            'message' => 'Akun COA berhasil diperbarui.',
-            'data'    => $chartOfAccount
-        ]);
+        return redirect()->route('accounts.show', $account)
+            ->with('success', 'Akun berhasil diperbarui.');
     }
 
-    /**
-     * Hapus akun.
-     */
-    public function destroy(ChartOfAccount $chartOfAccount)
+    public function destroy(ChartOfAccount $account)
     {
-        // Cek apakah akun sudah pernah digunakan di transaksi
-        if ($chartOfAccount->journalItems()->exists()) {
-            return response()->json([
-                'message' => 'Gagal menghapus! Akun ini sudah memiliki riwayat transaksi.'
-            ], 422);
+        if ($account->journalItems()->exists() || $account->children()->exists()) {
+            return back()->with('error', 'Akun yang sudah digunakan atau masih memiliki sub-akun tidak dapat dihapus.');
         }
 
-        $chartOfAccount->delete();
+        $account->delete();
 
-        return response()->json([
-            'message' => 'Akun COA berhasil dihapus.'
+        return redirect()->route('accounts.index')->with('success', 'Akun berhasil dihapus.');
+    }
+
+    private function validatedData(Request $request, ?ChartOfAccount $account = null): array
+    {
+        return $request->validate([
+            'code' => ['required', 'string', 'max:20', Rule::unique('chart_of_accounts', 'code')->ignore($account?->id)],
+            'name' => ['required', 'string', 'max:255'],
+            'type' => ['required', Rule::in(['asset', 'liability', 'equity', 'revenue', 'expense'])],
+            'normal_balance' => ['required', Rule::in(['debit', 'credit'])],
+            'parent_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('chart_of_accounts', 'id'),
+                ...($account ? [Rule::notIn([$account->id])] : []),
+            ],
+            'is_active' => ['sometimes', 'boolean'],
         ]);
     }
 }
