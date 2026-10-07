@@ -1,144 +1,136 @@
-<div align="center">
+# Sistem General Ledger dan Keuangan Perusahaan
 
-# 📑 General Ledger & Enterprise Financial System
-**A High-Precision, Multi-Branch Double-Entry Bookkeeping & Financial Management Engine**
+Aplikasi pencatatan keuangan berbasis Laravel untuk mendukung pengelolaan jurnal umum, bagan akun, dan laporan keuangan. Aplikasi menggunakan metode pencatatan berpasangan (*double-entry bookkeeping*) dengan dukungan data cabang.
 
-[![Laravel](https://img.shields.io/badge/Laravel-v12.x-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)](https://laravel.com)
-[![PHP](https://img.shields.io/badge/PHP-8.3%2B-777BB4?style=for-the-badge&logo=php&logoColor=white)](https://php.net)
-[![Livewire](https://img.shields.io/badge/Livewire-v3.x-4E56A6?style=for-the-badge&logo=livewire&logoColor=white)](https://livewire.laravel.com)
-[![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-v3.x-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
-[![License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](LICENSE)
+## Fitur
 
-[Architecture](#-system-architecture) • [Features](#-core-capabilities) • [Installation](#-getting-started) • [Database Schema](#-financial-logic--schema) • [Testing](#-code-quality--testing)
+Fitur antarmuka web yang tersedia:
 
-</div>
+- Dashboard ringkasan keuangan dan transaksi jurnal terbaru.
+- Pencatatan jurnal dengan beberapa baris akun dan pemeriksaan keseimbangan debit-kredit.
+- Pengelolaan bagan akun, termasuk penambahan, perubahan, penelusuran, dan penghapusan akun yang belum digunakan.
+- Laporan buku besar, laba rugi, dan neraca.
+- Autentikasi pengguna dan pemilihan cabang pada pencatatan jurnal.
 
----
+Repositori juga memuat controller dan service untuk beberapa proses lain, seperti payroll, pajak, karyawan, dan absensi. Ketersediaan proses tersebut melalui antarmuka web dapat berbeda; periksa route dan implementasi terkait sebelum menggunakannya.
 
-## 📌 Executive Summary
+## Teknologi
 
-**General Ledger & Enterprise Financial System** adalah platform pengelolaan keuangan terdistribusi berbasis **Laravel 12** dan **Livewire**. Platform ini dirancang khusus untuk memenuhi standar akuntansi komersial dengan penekanan pada **pencatatan ganda (double-entry bookkeeping)**, **isolasi data antar-cabang (multi-branch tenancy)**, serta **otomatisasi payroll dan pelaporan keuangan real-time**.
+- PHP `^8.2`
+- Laravel `^12.0`
+- Livewire `^4.4`
+- Tailwind CSS `^4.0`
+- Vite `^7.0`
+- MySQL atau MariaDB
 
----
+## Persyaratan
 
-## 🚀 Core Capabilities
+- PHP 8.2 atau versi yang kompatibel dengan dependensi Laravel.
+- Composer.
+- Node.js yang didukung Vite 7 dan npm.
+- MySQL atau MariaDB.
+- Ekstensi PHP yang dibutuhkan Laravel, termasuk `ctype`, `fileinfo`, `mbstring`, `openssl`, `pdo`, dan `tokenizer`.
 
-### 🏢 1. Multi-Branch Data Isolation
-- **Tenant Scope Isolation**: Menggunakan `BranchScope` global untuk memastikan transaksi keuangan cabang A terisolasi sepenuhnya dari cabang B.
-- **Role-Based Access Control (RBAC)**: Pembatasan hak akses berbasis peran (Admin Utama, Branch Manager, Accountant, HR Staff).
+## Instalasi
 
-### ⚖️ 2. High-Precision Double-Entry Ledger
-- **Strict Debit-Credit Balancing**: Otomatisasi validasi transaksi di mana $\sum \text{Debit} = \sum \text{Kredit}$.
-- **Immutable Transaction Records**: Setiap perubahan entri jurnal menggunakan mekanisme audit trail berbasis log transaksi.
-- **Flexible Chart of Accounts (COA)**: Hierarki akun modular mencakup *Assets*, *Liabilities*, *Equity*, *Revenues*, dan *Expenses*.
+Jalankan perintah berikut dari direktori proyek:
 
-### 💼 3. Automated HR & Payroll Ledger
-- **Attendance-to-Payroll Pipeline**: Kalkulasi otomatis komponen gaji pokok, potongan absensi, dan PPh 21 dari log kehadiran.
-- **Auto Journal Posting**: Hasil kalkulasi payroll otomatis memicu entri jurnal beban gaji (*Payroll Expenses*) ke general ledger.
-
-### 📊 4. Real-Time Financial Statements
-- **General Ledger (Buku Besar)**: Filtering detail entri per periode dan per akun.
-- **Trial Balance (Neraca Saldo)**: Rekapitulasi saldo awal, pergerakan mutasi, dan saldo akhir.
-- **Profit & Loss (Laba Rugi)**: Penghitungan pendapatan operasional bersih.
-- **Balance Sheet (Neraca)**: Ringkasan posisi aset, kewajiban, dan modal perusahaan.
-
----
-
-## 📐 System Architecture
-
-```mermaid
-graph TD
-    User([User / Accountant]) -->|HTTPS Request| Middleware[CheckRole / BranchScope Middleware]
-    Middleware -->|Authorized| Controller[Laravel Controllers / Livewire Components]
-    
-    subgraph Core Services Layer
-        Controller -->|Journal Processing| JS[JournalService]
-        Controller -->|Payroll Engine| PS[PayrollService]
-        Controller -->|Report Aggregation| FRS[FinancialReportService]
-        JS -->|Validate Balance| AS[AccountingService]
-    end
-    
-    subgraph Persistence Layer
-        AS -->|Write Journal Header| JE[(journal_entries)]
-        AS -->|Write Journal Items| JI[(journal_items)]
-        AS -->|Update Balances| COA[(chart_of_accounts)]
-    end
-```
-🛠️ System Requirements
-PHP: ^8.3
-
-Composer: ^2.7
-
-Node.js: ^20.x & NPM: ^10.x
-
-Database: MySQL ^8.0 / MariaDB ^10.6
-
-PHP Extensions: bcmath, ctype, fileinfo, json, mbstring, openssl, pdo_mysql, tokenizer, xml
-
-⚙️ Getting Started
-1. Clone & Dependencies
-Bash
-# Clone repository
-git clone [https://github.com/billyanz/Sistem-Keuangan-General-Ledger-.git](https://github.com/billyanz/Sistem-Keuangan-General-Ledger-.git)
-cd Sistem-Keuangan-General-Ledger-
-
-# Install PHP dependencies
-composer install --no-interaction --prefer-dist --optimize-autoloader
-
-# Install Frontend dependencies
+```bash
+composer install
 npm install
-2. Environment Configuration
-Bash
-# Copy environment file
+```
+
+Siapkan konfigurasi aplikasi:
+
+```bash
 cp .env.example .env
-
-# Generate application key
 php artisan key:generate
-Ubah baris konfigurasi database pada file .env:
+```
 
-Code snippet
+Pada Windows PowerShell, file `.env.example` dapat disalin dengan perintah berikut:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Buat database, kemudian sesuaikan konfigurasi berikut pada file `.env`:
+
+```dotenv
+APP_NAME="General Ledger"
+APP_URL=http://127.0.0.1:8000
+
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
 DB_PORT=3306
 DB_DATABASE=keuangan_db
 DB_USERNAME=root
 DB_PASSWORD=
-3. Database Migration & Seeding
-Bash
-# Run database migration & seed initial COA data
-php artisan migrate:fresh --seed
-4. Build Assets & Launch Server
-Bash
-# Build frontend assets (Development Mode)
-npm run dev
+```
 
-# In a separate terminal, serve the application
+Jalankan migration dan seeder:
+
+```bash
+php artisan migrate --seed
+```
+
+Perintah tersebut menjalankan migration serta seeder yang terdaftar, termasuk data cabang dan bagan akun. Hindari `migrate:fresh` pada database yang berisi data penting karena perintah itu menghapus tabel sebelum membuatnya kembali.
+
+Bangun aset frontend dan jalankan server:
+
+```bash
+npm run build
 php artisan serve
-Aplikasi dapat diakses melalui browser pada http://127.0.0.1:8000.
+```
 
-📂 Key Directory Structure
-Plaintext
-├── app/
-│   ├── Http/
-│   │   ├── Controllers/       # Controller pelaporan & transaksi
-│   │   └── Middleware/        # Multi-branch & role guards
-│   ├── Livewire/              # Component dinamis (JournalForm, dll)
-│   ├── Models/                # Eloquent Models (Journal, COA, Branch, dll)
-│   ├── Services/              # Core business logic (Accounting, Payroll, Reports)
-│   └── Traits/                # BelongsToBranch trait (Tenant isolation)
-├── database/
-│   ├── migrations/            # Skema tabel database
-│   └── seeders/               # Master data COA & Branch seeder
-├── resources/
-│   └── views/                 # Blade templates & Tailwind UI layouts
-└── routes/
-    └── web.php                # Web routes & authentication guards
-🧪 Code Quality & Testing
-Projek ini dilengkapi dengan pengujian otomatis (Feature & Unit Tests) untuk memastikan akurasi kalkulasi keuangan dan keamanan alokasi data per cabang:
+Buka alamat yang ditampilkan oleh `php artisan serve`, biasanya `http://127.0.0.1:8000`.
 
-Bash
-# Run all tests via Pest / PHPUnit
+Untuk pengembangan frontend, jalankan Vite pada terminal terpisah:
+
+```bash
+npm run dev
+```
+
+## Pengujian
+
+Jalankan seluruh pengujian dengan:
+
+```bash
 php artisan test
+```
 
-# Run specific feature tests
-php artisan test --filter=CoreUiTest
+Pengujian database pada konfigurasi bawaan menggunakan SQLite dalam memori. Pastikan ekstensi PDO SQLite tersedia jika ingin menjalankan pengujian fitur yang memerlukan database.
+
+## Peran Pengguna
+
+Migration pengguna mendefinisikan peran berikut:
+
+- `superadmin`
+- `admin_branch`
+- `accountant`
+- `hr`
+
+Nilai bawaan untuk peran pengguna adalah `accountant`. Pembatasan akses perlu diperiksa pada route dan controller yang digunakan; keberadaan peran pada database tidak dengan sendirinya menjamin seluruh akses sudah dibatasi sesuai peran.
+
+## Struktur Direktori
+
+```text
+app/
+  Http/Controllers/   Controller web dan endpoint aplikasi
+  Http/Middleware/    Middleware aplikasi, termasuk pemeriksaan peran
+  Livewire/           Komponen antarmuka interaktif
+  Models/             Model Eloquent
+  Services/           Logika bisnis dan pemrosesan transaksi
+  Traits/             Trait model, termasuk dukungan cabang
+database/
+  migrations/         Definisi skema database
+  seeders/            Data awal cabang, akun, dan pajak
+resources/
+  css/                Sumber CSS Tailwind
+  js/                 Sumber JavaScript frontend
+  views/              Template Blade aplikasi
+routes/
+  web.php             Route antarmuka web
+tests/
+  Feature/            Pengujian fitur
+  Unit/               Pengujian unit
+```
