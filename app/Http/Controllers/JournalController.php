@@ -8,6 +8,10 @@ use App\Services\JournalService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
+use App\Exports\JournalExport;
+use Maatwebsite\Excel\Facades\Excel;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class JournalController extends Controller
 {
@@ -17,9 +21,9 @@ class JournalController extends Controller
     {
         $request->validate([
             'start_date' => ['nullable', 'date'],
-            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
-            'status' => ['nullable', 'in:draft,posted'],
-            'search' => ['nullable', 'string', 'max:100'],
+            'end_date'   => ['nullable', 'date', 'after_or_equal:start_date'],
+            'status'     => ['nullable', 'in:draft,posted'],
+            'search'     => ['nullable', 'string', 'max:100'],
         ]);
 
         $journals = Journal::with(['branch', 'items.account', 'creator'])
@@ -50,22 +54,35 @@ class JournalController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'branch_id' => ['required', 'exists:branches,id'],
-            'date' => ['required', 'date'],
-            'description' => ['required', 'string', 'max:255'],
-            'items' => ['required', 'array', 'min:2'],
-            'items.*.account_id' => ['required', 'exists:chart_of_accounts,id'],
-            'items.*.debit' => ['required', 'numeric', 'min:0'],
-            'items.*.credit' => ['required', 'numeric', 'min:0'],
+            'branch_id'           => ['required', 'exists:branches,id'],
+            'transaction_date'    => ['required_without:date', 'nullable', 'date'],
+            'date'                => ['required_without:transaction_date', 'nullable', 'date'],
+            'description'          => ['required', 'string', 'max:255'],
+            'items'               => ['required', 'array', 'min:2'],
+            'items.*.account_id'  => ['required', 'exists:chart_of_accounts,id'],
+            'items.*.debit'       => ['required', 'numeric', 'min:0'],
+            'items.*.credit'      => ['required', 'numeric', 'min:0'],
             'items.*.description' => ['nullable', 'string', 'max:255'],
         ]);
+
+        if (
+            isset($validated['transaction_date'], $validated['date'])
+            && $validated['transaction_date'] !== $validated['date']
+        ) {
+            throw ValidationException::withMessages([
+                'transaction_date' => 'Tanggal transaksi harus sama dengan nilai date jika keduanya dikirim.',
+            ]);
+        }
+
+        $validated['date'] = $validated['transaction_date'] ?? $validated['date'];
+        unset($validated['transaction_date']);
 
         $journal = DB::transaction(fn () => $this->journalService->createJournal($validated, Auth::id()));
 
         if ($request->expectsJson()) {
             return response()->json([
                 'message' => 'Jurnal berhasil dicatat.',
-                'data' => $journal,
+                'data'    => $journal,
             ], 201);
         }
 
@@ -78,5 +95,45 @@ class JournalController extends Controller
         $journal->load(['branch', 'items.account', 'creator']);
 
         return view('journals.show', compact('journal'));
+    }
+
+    /**
+     * Export data jurnal ke Excel.
+     */
+    public function exportExcel(Request $request)
+    {
+        $search    = $request->input('search');
+        $startDate = $request->input('start_date');
+        $endDate   = $request->input('end_date');
+
+        return Excel::download(
+            new JournalExport($search, $startDate, $endDate),
+            'jurnal-umum-' . date('Y-m-d') . '.xlsx'
+        );
+    }
+
+    /**
+     * Export data jurnal ke PDF.
+     */
+    public function exportPdf(Request $request)
+    {
+        $search    = $request->input('search');
+        $startDate = $request->input('start_date');
+        $endDate   = $request->input('end_date');
+
+        $journals = Journal::with(['branch', 'items.account'])
+            ->when($search, function ($query) use ($search) {
+                $query->where(function ($query) use ($search) {
+                    $query->where('description', 'like', "%{$search}%")
+                        ->orWhere('entry_number', 'like', "%{$search}%");
+                });
+            })
+            ->when($startDate, fn ($q) => $q->whereDate('date', '>=', $startDate))
+            ->when($endDate, fn ($q) => $q->whereDate('date', '<=', $endDate))
+            ->latest('date')
+            ->get();
+
+        $pdf = Pdf::loadView('journals.pdf', compact('journals'));
+        return $pdf->download('jurnal-umum-' . date('Y-m-d') . '.pdf');
     }
 }

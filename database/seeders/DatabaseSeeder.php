@@ -12,6 +12,7 @@ class DatabaseSeeder extends Seeder
             BranchSeeder::class,
             ChartOfAccountSeeder::class,
             TaxSeeder::class,
+            RoleAndPermissionSeeder::class,
         ]);
     }
 }

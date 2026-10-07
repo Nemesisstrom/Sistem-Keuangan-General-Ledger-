@@ -78,6 +78,7 @@ class AuthController extends Controller
             'email'    => $validated['email'],
             'password' => Hash::make($validated['password']),
         ]);
+        $user->assignRole('Staff');
 
         // Otomatis login setelah registrasi
         Auth::login($user);

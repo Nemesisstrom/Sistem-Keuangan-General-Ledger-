@@ -7,9 +7,11 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GeneralLedgerReportController;
 use App\Http\Controllers\JournalController;
 use App\Http\Controllers\ProfitLossReportController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
-// Rute Pengunjung (Guest)
+// 1. Rute Pengunjung (Guest)
+
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [AuthController::class, 'login'])->name('login.post');
@@ -18,8 +20,8 @@ Route::middleware('guest')->group(function () {
     Route::post('/register', [AuthController::class, 'register'])->name('register.post');
 });
 
-// Rute Terproteksi (Wajib Login)
-Route::middleware('auth')->group(function () {
+// 2. Rute Terproteksi (Wajib Login)
+Route::middleware(['auth'])->group(function () {
 
     // Auth Logout
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
@@ -27,8 +29,16 @@ Route::middleware('auth')->group(function () {
     // Dashboard
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Chart of Accounts (CoA)
-    Route::resource('accounts', ChartOfAccountController::class);
+    // Hanya Admin yang bisa mengelola Master Chart of Accounts (CoA)
+    Route::middleware(['role:Admin'])->group(function () {
+        Route::resource('accounts', ChartOfAccountController::class);
+        Route::resource('users', UserController::class)->except(['show']);
+    });
+
+
+    // General Journal Entry & Export
+    Route::get('/journals/export/excel', [JournalController::class, 'exportExcel'])->name('journals.export.excel');
+    Route::get('/journals/export/pdf', [JournalController::class, 'exportPdf'])->name('journals.export.pdf');
 
     // General Journal Entry
     Route::resource('journals', JournalController::class)->only([
@@ -38,8 +48,9 @@ Route::middleware('auth')->group(function () {
         'show',
     ]);
 
-    // Financial Reports
-    Route::prefix('reports')->name('reports.')->group(function () {
+
+    // Financial Reports (Memerlukan izin 'view-reports')
+    Route::middleware(['permission:view-reports'])->prefix('reports')->name('reports.')->group(function () {
         Route::get('/general-ledger', [GeneralLedgerReportController::class, 'index'])->name('general-ledger');
         Route::get('/profit-loss', [ProfitLossReportController::class, 'index'])->name('profit-loss');
         Route::get('/balance-sheet', [BalanceSheetReportController::class, 'index'])->name('balance-sheet');
