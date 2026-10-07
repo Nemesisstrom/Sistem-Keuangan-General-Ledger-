@@ -5,20 +5,24 @@ namespace App\Livewire;
 use App\Models\Branch;
 use App\Models\ChartOfAccount;
 use App\Services\JournalService;
-use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Component;
 
 class JournalForm extends Component
 {
     public $branch_id;
+
     public $date;
+
     public $description;
 
     // Array dinamis untuk menyimpan baris jurnal
     public array $items = [];
 
     public $totalDebit = 0;
+
     public $totalCredit = 0;
+
     public $isBalanced = false;
 
     public function mount()
@@ -26,8 +30,9 @@ class JournalForm extends Component
         $this->date = now()->format('Y-m-d');
 
         // Atur cabang default jika user bukan Super Admin
-        if ((Auth::check())  && !Auth::user()->is_super_admin) {
-            $this->branch_id = Auth::user()->branch_id;
+        if (Auth::check() && Auth::user()->role !== 'superadmin') {
+            $this->branch_id = Auth::user()->branch_id
+                ?? Branch::where('is_active', true)->value('id');
         } else {
             $this->branch_id = Branch::first()?->id;
         }
@@ -44,7 +49,7 @@ class JournalForm extends Component
             'account_id' => '',
             'debit' => 0,
             'credit' => 0,
-            'description' => ''
+            'description' => '',
         ];
     }
 
@@ -83,46 +88,35 @@ class JournalForm extends Component
 
     public function save(JournalService $journalService)
     {
-        // Validasi Form
         $this->validate([
             'branch_id' => 'required|exists:branches,id',
             'date' => 'required|date',
             'description' => 'required|string|max:255',
             'items' => 'required|array|min:2',
             'items.*.account_id' => 'required|exists:chart_of_accounts,id',
-            'items.*.debit' => 'numeric|min:0',
-            'items.*.credit' => 'numeric|min:0',
+            'items.*.debit' => 'required|numeric|min:0',
+            'items.*.credit' => 'required|numeric|min:0',
         ], [
             'items.*.account_id.required' => 'Pilih akun untuk semua baris.',
         ]);
 
         $this->calculateTotals();
 
-        if (!$this->isBalanced) {
+        if (! $this->isBalanced) {
             session()->flash('error', 'Gagal menyimpan: Total Debit dan Kredit harus seimbang!');
+
             return;
         }
 
-        try {
-            $journalService->createEntry(
-                (int) $this->branch_id,
-                $this->date,
-                $this->description,
-                $this->items
-            );
+        $journal = $journalService->createEntry(
+            (int) $this->branch_id,
+            $this->date,
+            $this->description,
+            $this->items,
+            Auth::id()
+        );
 
-            session()->flash('success', 'Transaksi Jurnal Umum berhasil disimpan!');
-
-            // Reset Form setelah simpan
-            $this->reset(['description']);
-            $this->items = [];
-            $this->addItem();
-            $this->addItem();
-            $this->calculateTotals();
-
-        } catch (\Exception $e) {
-            session()->flash('error', 'Terjadi kesalahan: ' . $e->getMessage());
-        }
+        return redirect()->route('journals.show', $journal);
     }
 
     public function render()
@@ -130,9 +124,8 @@ class JournalForm extends Component
         return view('livewire.journal-form', [
             'branches' => Branch::where('is_active', true)->get(),
             'accounts' => ChartOfAccount::where('is_active', true)
-                            ->whereNotNull('parent_id') // Hanya tampilkan akun detail
-                            ->orderBy('code')
-                            ->get(),
+                ->orderBy('code')
+                ->get(),
         ]);
     }
 }

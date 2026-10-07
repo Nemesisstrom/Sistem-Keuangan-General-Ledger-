@@ -1,8 +1,13 @@
 *.log
 .DS_Store
+Thumbs.db
+
+# Environment files
 .env
-.env.backup
-.env.production
+.env.*
+!.env.example
+
+# IDE & Tooling
 .phpactor.json
 .phpunit.result.cache
 /.fleet
@@ -11,14 +16,28 @@
 /.phpunit.cache
 /.vscode
 /.zed
+
+# Dependencies & Build
 /auth.json
 /node_modules
 /public/build
 /public/hot
 /public/storage
-/storage/*.key
-/storage/pail
 /vendor
 Homestead.json
 Homestead.yaml
-Thumbs.db
+
+# Storage & Framework Cache (SANGAT PENTING)
+/storage/*.key
+/storage/pail
+/storage/framework/cache/data/*
+!/storage/framework/cache/data/.gitignore
+/storage/framework/sessions/*
+!/storage/framework/sessions/.gitignore
+/storage/framework/testing/*
+!/storage/framework/testing/.gitignore
+/storage/framework/views/*
+!/storage/framework/views/.gitignore
+/storage/framework/lsp-*
+/storage/logs/*
+!/storage/logs/.gitignore

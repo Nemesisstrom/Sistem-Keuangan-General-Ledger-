@@ -9,11 +9,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class TaxLog extends Model
 {
-    use HasFactory, BelongsToBranch;
+    use BelongsToBranch, HasFactory;
 
     protected $fillable = [
         'branch_id',
-        'journal_id',
+        'journal_entry_id',
         'tax_id',
         'type',
         'taxable_amount',
@@ -33,7 +33,7 @@ class TaxLog extends Model
 
     public function journal(): BelongsTo
     {
-        return $this->belongsTo(Journal::class);
+        return $this->belongsTo(Journal::class, 'journal_entry_id');
     }
 
     public function tax(): BelongsTo

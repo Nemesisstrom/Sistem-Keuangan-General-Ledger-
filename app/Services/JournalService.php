@@ -2,63 +2,95 @@
 
 namespace App\Services;
 
+use App\Models\Branch;
 use App\Models\Journal;
 use App\Models\JournalItem;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class JournalService
 {
-    /**
-     * Membuat transaksi jurnal baru beserta baris detailnya (debit/kredit).
-     */
     public function createEntry(
         int $branchId,
         string $date,
         string $description,
-        array $items
-    ) {
-        // ...
+        array $items,
+        ?int $userId = null
+    ): Journal {
+        return $this->createJournal([
+            'branch_id' => $branchId,
+            'date' => $date,
+            'description' => $description,
+            'items' => $items,
+        ], $userId);
     }
-    
+
     public function createJournal(array $data, ?int $userId = null): Journal
     {
-        return DB::transaction(function () use ($data, $userId) {
-            // 1. Buat Header Jurnal
-            $journal = Journal::create([
-                'branch_id'        => $data['branch_id'],
-                'user_id'          => $userId,
-                'transaction_date' => $data['transaction_date'],
-                'description'      => $data['description'],
-                'status'           => 'posted',
-            ]);
+        $date = $data['date'] ?? $data['transaction_date'] ?? null;
+        $items = $data['items'];
 
-            // 2. Buat Detail Item Jurnal (Debit / Kredit)
-            foreach ($data['items'] as $item) {
-                JournalItem::create([
-                    'journal_id' => $journal->id,
-                    'account_id' => $item['account_id'],
-                    'debit'      => $item['debit'],
-                    'credit'     => $item['credit'],
+        $totalDebit = 0;
+        $totalCredit = 0;
+
+        foreach ($items as $index => $item) {
+            $debit = (float) ($item['debit'] ?? 0);
+            $credit = (float) ($item['credit'] ?? 0);
+
+            if ($debit > 0 && $credit > 0) {
+                throw ValidationException::withMessages([
+                    "items.$index.debit" => 'Satu baris hanya boleh memiliki debit atau kredit.',
                 ]);
             }
 
-            return $journal;
-        });
-    }
+            $totalDebit += $debit;
+            $totalCredit += $credit;
+        }
 
-    /**
-     * Membatalkan (Void) transaksi jurnal.
-     */
-    public function voidJournal(Journal $journal): Journal
-    {
-        return DB::transaction(function () use ($journal) {
-            $journal->update([
-                'status' => 'voided',
+        if ($totalDebit <= 0 || round($totalDebit, 2) !== round($totalCredit, 2)) {
+            throw ValidationException::withMessages([
+                'items' => 'Total debit dan kredit harus sama dan lebih besar dari nol.',
+            ]);
+        }
+
+        return DB::transaction(function () use ($data, $date, $items, $userId) {
+            $branchId = (int) $data['branch_id'];
+            Branch::whereKey($branchId)->lockForUpdate()->firstOrFail();
+            $entryNumber = $this->nextEntryNumber($branchId, $date);
+
+            $journal = Journal::create([
+                'branch_id' => $branchId,
+                'entry_number' => $entryNumber,
+                'date' => $date,
+                'description' => $data['description'],
+                'status' => 'posted',
+                'created_by' => $userId,
             ]);
 
-            return $journal;
+            foreach ($items as $item) {
+                JournalItem::create([
+                    'journal_entry_id' => $journal->id,
+                    'account_id' => $item['account_id'],
+                    'debit' => $item['debit'] ?? 0,
+                    'credit' => $item['credit'] ?? 0,
+                    'description' => $item['description'] ?? null,
+                ]);
+            }
+
+            return $journal->load(['branch', 'items.account', 'creator']);
         });
     }
 
+    private function nextEntryNumber(int $branchId, string $date): string
+    {
+        $prefix = sprintf('JRNL-%d-%s-', $branchId, str_replace('-', '', $date));
+        $lastNumber = Journal::withoutBranchScope()
+            ->where('entry_number', 'like', $prefix.'%')
+            ->orderByDesc('entry_number')
+            ->value('entry_number');
 
+        $sequence = $lastNumber ? (int) substr($lastNumber, -4) + 1 : 1;
+
+        return $prefix.str_pad((string) $sequence, 4, '0', STR_PAD_LEFT);
+    }
 }

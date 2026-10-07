@@ -1,4 +1,8 @@
-<x-app-layout>
+@extends('layouts.app')
+@section('title', 'Buku Besar')
+@section('page-title', 'Buku Besar')
+@section('page-subtitle', 'Telusuri mutasi debit, kredit, dan saldo per akun.')
+@section('content')
     <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <!-- Header Page -->
         <div class="flex justify-between items-center mb-6">
@@ -155,4 +159,4 @@
             </div>
         @endif
     </div>
-</x-app-layout>
+@endsection

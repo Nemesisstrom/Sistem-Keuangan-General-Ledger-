@@ -11,19 +11,21 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Journal extends Model
 {
-    use HasFactory, BelongsToBranch;
+    use BelongsToBranch, HasFactory;
+
+    protected $table = 'journal_entries';
 
     protected $fillable = [
         'branch_id',
-        'transaction_date',
-        'reference_number',
+        'entry_number',
+        'date',
         'description',
         'status',
         'created_by',
     ];
 
     protected $casts = [
-        'transaction_date' => 'date',
+        'date' => 'date',
     ];
 
     public function branch(): BelongsTo
@@ -36,18 +38,23 @@ class Journal extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function user(): BelongsTo
+    {
+        return $this->creator();
+    }
+
     public function items(): HasMany
     {
-        return $this->hasMany(JournalItem::class);
+        return $this->hasMany(JournalItem::class, 'journal_entry_id');
     }
 
     public function taxLogs(): HasMany
     {
-        return $this->hasMany(TaxLog::class);
+        return $this->hasMany(TaxLog::class, 'journal_entry_id');
     }
 
     public function payroll(): HasOne
     {
-        return $this->hasOne(Payroll::class);
+        return $this->hasOne(Payroll::class, 'journal_entry_id');
     }
 }

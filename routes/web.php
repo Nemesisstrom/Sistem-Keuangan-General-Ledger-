@@ -1,14 +1,13 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\ChartOfAccountController;
-use App\Http\Controllers\JournalController;
-use App\Http\Controllers\GeneralLedgerReportController;
-use App\Http\Controllers\ProfitLossReportController;
 use App\Http\Controllers\BalanceSheetReportController;
-
+use App\Http\Controllers\ChartOfAccountController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\GeneralLedgerReportController;
+use App\Http\Controllers\JournalController;
+use App\Http\Controllers\ProfitLossReportController;
+use Illuminate\Support\Facades\Route;
 
 // Rute Pengunjung (Guest)
 Route::middleware('guest')->group(function () {
@@ -32,7 +31,12 @@ Route::middleware('auth')->group(function () {
     Route::resource('accounts', ChartOfAccountController::class);
 
     // General Journal Entry
-    Route::resource('journals', JournalController::class);
+    Route::resource('journals', JournalController::class)->only([
+        'index',
+        'create',
+        'store',
+        'show',
+    ]);
 
     // Financial Reports
     Route::prefix('reports')->name('reports.')->group(function () {

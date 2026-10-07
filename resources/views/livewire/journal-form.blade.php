@@ -1,146 +1,83 @@
-<div class="max-w-6xl mx-auto p-6 bg-white rounded-lg shadow-md">
-    <h2 class="text-2xl font-bold mb-6 text-gray-800">Form Transaksi Jurnal Umum</h2>
-
-    <!-- Alert / Flash Message -->
-    @if (session()->has('success'))
-        <div class="mb-4 p-4 text-green-700 bg-green-100 rounded-lg">
-            {{ session('success') }}
-        </div>
-    @endif
+<div class="mx-auto max-w-6xl space-y-5">
     @if (session()->has('error'))
-        <div class="mb-4 p-4 text-red-700 bg-red-100 rounded-lg">
-            {{ session('error') }}
-        </div>
+        <div class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">{{ session('error') }}</div>
     @endif
     @if (session()->has('warning'))
-        <div class="mb-4 p-4 text-yellow-700 bg-yellow-100 rounded-lg">
-            {{ session('warning') }}
-        </div>
+        <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">{{ session('warning') }}</div>
+    @endif
+    @if($errors->any())
+        <div class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800"><p class="font-semibold">Periksa kembali data jurnal.</p><ul class="mt-1 list-inside list-disc text-xs">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>
     @endif
 
-    <form wire:submit.prevent="save">
-        <!-- Header Jurnal -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <!-- Pilih Cabang (SR1/SR2) -->
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Cabang *</label>
-                <select wire:model.live="branch_id" class="w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500" @if(auth()->check() && !auth()->user()->is_super_admin) disabled @endif>
-                    <option value="">-- Pilih Cabang --</option>
-                    @foreach($branches as $branch)
-                        <option value="{{ $branch->id }}">{{ $branch->code }} - {{ $branch->name }}</option>
-                    @endforeach
-                </select>
-                @error('branch_id') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+    <form wire:submit="save" class="space-y-5">
+        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+            <div class="mb-5 flex items-start justify-between gap-3">
+                <div><p class="text-[10px] font-bold uppercase tracking-[.17em] text-emerald-700">Informasi utama</p><h2 class="mt-1 text-base font-bold text-slate-900">Header jurnal</h2></div>
+                <span class="rounded-full bg-slate-100 px-3 py-1 text-[10px] font-semibold text-slate-500">Semua kolom bertanda * wajib</span>
             </div>
-
-            <!-- Tanggal Transaction -->
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal *</label>
-                <input type="date" wire:model="date" class="w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                @error('date') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
-            </div>
-
-            <!-- Keterangan Transaksi -->
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Keterangan / Memori *</label>
-                <input type="text" wire:model="description" placeholder="Deskripsi transaksi..." class="w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                @error('description') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
-            </div>
-        </div>
-
-        <!-- Detail Baris Jurnal Dinamis -->
-        <div class="overflow-x-auto mb-6">
-            <table class="w-full text-left border-collapse">
-                <thead>
-                    <tr class="bg-gray-100 text-gray-700 text-sm">
-                        <th class="p-3 border">Akun Rekening (COA)</th>
-                        <th class="p-3 border">Keterangan Baris</th>
-                        <th class="p-3 border w-40 text-right">Debit (Rp)</th>
-                        <th class="p-3 border w-40 text-right">Kredit (Rp)</th>
-                        <th class="p-3 border w-16 text-center">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($items as $index => $item)
-                        <tr class="border-b hover:bg-gray-50">
-                            <!-- Akun COA -->
-                            <td class="p-2 border">
-                                <select wire:model.live="items.{{ $index }}.account_id" class="w-full border-gray-300 rounded-md shadow-sm text-sm">
-                                    <option value="">-- Pilih Akun --</option>
-                                    @foreach($accounts as $acc)
-                                        <option value="{{ $acc->id }}">{{ $acc->code }} - {{ $acc->name }}</option>
-                                    @endforeach
-                                </select>
-                                @error("items.$index.account_id") <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
-                            </td>
-
-                            <!-- Deskripsi Item -->
-                            <td class="p-2 border">
-                                <input type="text" wire:model="items.{{ $index }}.description" placeholder="Opsional" class="w-full border-gray-300 rounded-md shadow-sm text-sm">
-                            </td>
-
-                            <!-- Debit -->
-                            <td class="p-2 border">
-                                <input type="number" step="0.01" min="0" wire:model.live.debounce.300ms="items.{{ $index }}.debit" class="w-full border-gray-300 rounded-md shadow-sm text-sm text-right">
-                            </td>
-
-                            <!-- Kredit -->
-                            <td class="p-2 border">
-                                <input type="number" step="0.01" min="0" wire:model.live.debounce.300ms="items.{{ $index }}.credit" class="w-full border-gray-300 rounded-md shadow-sm text-sm text-right">
-                            </td>
-
-                            <!-- Tombol Hapus Baris -->
-                            <td class="p-2 border text-center">
-                                <button type="button" wire:click="removeItem({{ $index }})" class="text-red-600 hover:text-red-800 font-bold text-lg">
-                                    &times;
-                                </button>
-                            </td>
-                        </tr>
-                    @endforeach
-                </tbody>
-                <tfoot>
-                    <!-- Total Debit & Kredit -->
-                    <tr class="bg-gray-50 font-semibold text-sm">
-                        <td colspan="2" class="p-3 border text-right">Total:</td>
-                        <td class="p-3 border text-right text-blue-600">
-                            Rp {{ number_format($totalDebit, 2, ',', '.') }}
-                        </td>
-                        <td class="p-3 border text-right text-blue-600">
-                            Rp {{ number_format($totalCredit, 2, ',', '.') }}
-                        </td>
-                        <td class="p-3 border"></td>
-                    </tr>
-                </tfoot>
-            </table>
-        </div>
-
-        <!-- Footer Control: Tambah Baris, Status Balance & Submit -->
-        <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
-            <button type="button" wire:click="addItem" class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 text-sm">
-                + Tambah Baris
-            </button>
-
-            <div class="flex items-center gap-4">
-                <!-- Indicator Balance -->
+            <div class="grid gap-4 md:grid-cols-3">
                 <div>
-                    @if($isBalanced)
-                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
-                            ✓ Balance (Seimbang)
-                        </span>
-                    @else
-                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">
-                            ✕ Unbalanced (Selisih: Rp {{ number_format(abs($totalDebit - $totalCredit), 2, ',', '.') }})
-                        </span>
-                    @endif
+                    <label class="mb-1.5 block text-xs font-semibold text-slate-600">Cabang <span class="text-rose-600">*</span></label>
+                    <select wire:model="branch_id" class="w-full rounded-xl border-slate-200 text-sm focus:border-emerald-700 focus:ring-emerald-700" @if(auth()->check() && auth()->user()->role !== 'superadmin') disabled @endif>
+                        <option value="">Pilih cabang</option>
+                        @foreach($branches as $branch)<option value="{{ $branch->id }}">{{ $branch->code }} · {{ $branch->name }}</option>@endforeach
+                    </select>
+                    @error('branch_id')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
                 </div>
-
-                <!-- Submit Button -->
-                <button type="submit"
-                        @if(!$isBalanced) disabled @endif
-                        class="px-6 py-2 bg-indigo-600 text-white font-medium rounded-md hover:bg-indigo-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed">
-                    Simpan Jurnal
-                </button>
+                <div>
+                    <label class="mb-1.5 block text-xs font-semibold text-slate-600">Tanggal transaksi <span class="text-rose-600">*</span></label>
+                    <input type="date" wire:model="date" class="w-full rounded-xl border-slate-200 text-sm focus:border-emerald-700 focus:ring-emerald-700">
+                    @error('date')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
+                </div>
+                <div>
+                    <label class="mb-1.5 block text-xs font-semibold text-slate-600">Keterangan <span class="text-rose-600">*</span></label>
+                    <input type="text" wire:model="description" maxlength="255" placeholder="Tujuan atau ringkasan transaksi" class="w-full rounded-xl border-slate-200 text-sm focus:border-emerald-700 focus:ring-emerald-700">
+                    @error('description')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
+                </div>
             </div>
-        </div>
+        </section>
+
+        <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div class="flex flex-col justify-between gap-3 border-b border-slate-100 p-5 sm:flex-row sm:items-center sm:px-6">
+                <div><p class="text-[10px] font-bold uppercase tracking-[.17em] text-emerald-700">Rincian pembukuan</p><h2 class="mt-1 text-base font-bold text-slate-900">Baris jurnal</h2><p class="mt-1 text-xs text-slate-400">Pastikan setiap baris hanya memiliki nilai debit atau kredit.</p></div>
+                <button type="button" wire:click="addItem" class="rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 py-2 text-xs font-semibold text-emerald-800 transition hover:bg-emerald-100">＋ Tambah baris</button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full min-w-[850px] text-left text-sm">
+                    <thead class="bg-slate-50 text-[10px] uppercase tracking-wider text-slate-400"><tr><th class="w-12 px-4 py-3 text-center">#</th><th class="px-3 py-3">Akun</th><th class="px-3 py-3">Keterangan baris</th><th class="w-44 px-3 py-3 text-right">Debit (Rp)</th><th class="w-44 px-3 py-3 text-right">Kredit (Rp)</th><th class="w-14 px-3 py-3"></th></tr></thead>
+                    <tbody class="divide-y divide-slate-100">
+                        @foreach($items as $index => $item)
+                            <tr wire:key="journal-item-{{ $index }}" class="align-top">
+                                <td class="px-4 py-4 text-center text-xs font-semibold text-slate-400">{{ str_pad($index + 1, 2, '0', STR_PAD_LEFT) }}</td>
+                                <td class="px-3 py-3">
+                                    <select wire:model="items.{{ $index }}.account_id" class="w-full rounded-lg border-slate-200 text-xs focus:border-emerald-700 focus:ring-emerald-700"><option value="">Pilih akun</option>@foreach($accounts as $account)<option value="{{ $account->id }}">{{ $account->code }} · {{ $account->name }}</option>@endforeach</select>
+                                    @error("items.$index.account_id")<p class="mt-1 text-[10px] text-rose-600">{{ $message }}</p>@enderror
+                                </td>
+                                <td class="px-3 py-3"><input wire:model="items.{{ $index }}.description" maxlength="255" placeholder="Opsional" class="w-full rounded-lg border-slate-200 text-xs focus:border-emerald-700 focus:ring-emerald-700">@error("items.$index.description")<p class="mt-1 text-[10px] text-rose-600">{{ $message }}</p>@enderror</td>
+                                <td class="px-3 py-3"><input type="number" min="0" step="0.01" wire:model.live.debounce.250ms="items.{{ $index }}.debit" class="w-full rounded-lg border-slate-200 text-right text-xs tabular-nums focus:border-emerald-700 focus:ring-emerald-700" placeholder="0.00"></td>
+                                <td class="px-3 py-3"><input type="number" min="0" step="0.01" wire:model.live.debounce.250ms="items.{{ $index }}.credit" class="w-full rounded-lg border-slate-200 text-right text-xs tabular-nums focus:border-emerald-700 focus:ring-emerald-700" placeholder="0.00"></td>
+                                <td class="px-3 py-3 text-center"><button type="button" wire:click="removeItem({{ $index }})" aria-label="Hapus baris" class="rounded-lg p-2 text-slate-300 transition hover:bg-rose-50 hover:text-rose-600">×</button></td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                    <tfoot class="border-t border-slate-200 bg-slate-50">
+                        <tr><td colspan="3" class="px-5 py-4 text-right text-xs font-bold uppercase tracking-wider text-slate-500">Total transaksi</td><td class="px-3 py-4 text-right text-sm font-bold tabular-nums text-slate-900">Rp {{ number_format($totalDebit, 2, ',', '.') }}</td><td class="px-3 py-4 text-right text-sm font-bold tabular-nums text-slate-900">Rp {{ number_format($totalCredit, 2, ',', '.') }}</td><td></td></tr>
+                    </tfoot>
+                </table>
+            </div>
+            <div class="flex flex-col justify-between gap-4 border-t border-slate-100 p-4 sm:flex-row sm:items-center sm:px-6">
+                <div class="flex items-center gap-2">
+                    <span class="h-2 w-2 rounded-full {{ $isBalanced ? 'bg-emerald-500' : 'bg-amber-400' }}"></span>
+                    @if($isBalanced)<span class="text-xs font-semibold text-emerald-700">Seimbang · siap diposting</span>@else<span class="text-xs font-semibold text-amber-700">Belum seimbang · selisih Rp {{ number_format(abs($totalDebit - $totalCredit), 2, ',', '.') }}</span>@endif
+                </div>
+                <div class="flex gap-2">
+                    <a href="{{ route('journals.index') }}" class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-50">Batal</a>
+                    <button type="submit" wire:loading.attr="disabled" @disabled(!$isBalanced) class="rounded-xl bg-[#174735] px-5 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-[#103626] disabled:cursor-not-allowed disabled:opacity-40">
+                        <span wire:loading.remove wire:target="save">Simpan & posting jurnal</span>
+                        <span wire:loading wire:target="save">Menyimpan...</span>
+                    </button>
+                </div>
+            </div>
+        </section>
     </form>
 </div>
