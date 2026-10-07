@@ -11,6 +11,15 @@ class JournalService
     /**
      * Membuat transaksi jurnal baru beserta baris detailnya (debit/kredit).
      */
+    public function createEntry(
+        int $branchId,
+        string $date,
+        string $description,
+        array $items
+    ) {
+        // ...
+    }
+    
     public function createJournal(array $data, ?int $userId = null): Journal
     {
         return DB::transaction(function () use ($data, $userId) {
@@ -50,4 +59,6 @@ class JournalService
             return $journal;
         });
     }
+
+
 }

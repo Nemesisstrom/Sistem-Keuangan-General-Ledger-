@@ -5,11 +5,12 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 
 class LoginController extends Controller
 {
     /**
-     * Tampilkan halaman form login.
+     * Tampilkan form login.
      */
     public function showLoginForm()
     {
@@ -17,38 +18,45 @@ class LoginController extends Controller
     }
 
     /**
-     * Proses autentikasi user.
+     * Proses otentikasi user.
      */
-    public function authenticate(Request $request)
+    public function login(Request $request)
     {
-        // Validasi Input
         $credentials = $request->validate([
-            'email'    => ['required', 'email'],
+            'email' => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
         ], [
-            'email.required'    => 'Alamat email wajib diisi.',
-            'email.email'       => 'Format email tidak valid.',
+            'email.required' => 'Email wajib diisi.',
+            'email.email' => 'Format email tidak valid.',
             'password.required' => 'Kata sandi wajib diisi.',
         ]);
 
-        // Cek Keberadaan & Keaktifan Akun
-        $remember = $request->has('remember');
+        $remember = $request->boolean('remember');
 
         if (Auth::attempt($credentials, $remember)) {
             $request->session()->regenerate();
 
-            return redirect()->intended(route('dashboard'))
-                ->with('success', 'Selamat datang kembali, ' . Auth::user()->name . '!');
+            // Cek status keaktifan user
+            if (!Auth::user()->is_active) {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+
+                throw ValidationException::withMessages([
+                    'email' => 'Akun Anda dinonaktifkan. Silakan hubungi Administrator.',
+                ]);
+            }
+
+            return redirect()->intended('/dashboard');
         }
 
-        // Jika Gagal Authenticate
-        return back()->withErrors([
-            'email' => 'Kredensial yang Anda masukkan tidak sesuai dengan data kami.',
-        ])->onlyInput('email');
+        throw ValidationException::withMessages([
+            'email' => 'Kombinasi email dan kata sandi tidak cocok.',
+        ]);
     }
 
     /**
-     * Proses logout user.
+     * Logout user dan bersihkan sesi.
      */
     public function logout(Request $request)
     {
@@ -57,6 +65,6 @@ class LoginController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('login')->with('success', 'Anda telah berhasil keluar.');
+        return redirect('/login');
     }
 }

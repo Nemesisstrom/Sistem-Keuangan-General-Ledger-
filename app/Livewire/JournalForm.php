@@ -6,6 +6,7 @@ use App\Models\Branch;
 use App\Models\ChartOfAccount;
 use App\Services\JournalService;
 use Livewire\Component;
+use Illuminate\Support\Facades\Auth;
 
 class JournalForm extends Component
 {
@@ -25,8 +26,8 @@ class JournalForm extends Component
         $this->date = now()->format('Y-m-d');
 
         // Atur cabang default jika user bukan Super Admin
-        if (auth()->check() && !auth()->user()->is_super_admin) {
-            $this->branch_id = auth()->user()->branch_id;
+        if ((Auth::check())  && !Auth::user()->is_super_admin) {
+            $this->branch_id = Auth::user()->branch_id;
         } else {
             $this->branch_id = Branch::first()?->id;
         }
