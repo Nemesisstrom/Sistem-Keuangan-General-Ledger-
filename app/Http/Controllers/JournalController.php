@@ -8,6 +8,7 @@ use App\Services\JournalService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use App\Exports\JournalExport;
 use Maatwebsite\Excel\Facades\Excel;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -54,7 +55,8 @@ class JournalController extends Controller
     {
         $validated = $request->validate([
             'branch_id'           => ['required', 'exists:branches,id'],
-            'date'                => ['required', 'date'],
+            'transaction_date'    => ['required_without:date', 'nullable', 'date'],
+            'date'                => ['required_without:transaction_date', 'nullable', 'date'],
             'description'          => ['required', 'string', 'max:255'],
             'items'               => ['required', 'array', 'min:2'],
             'items.*.account_id'  => ['required', 'exists:chart_of_accounts,id'],
@@ -62,6 +64,18 @@ class JournalController extends Controller
             'items.*.credit'      => ['required', 'numeric', 'min:0'],
             'items.*.description' => ['nullable', 'string', 'max:255'],
         ]);
+
+        if (
+            isset($validated['transaction_date'], $validated['date'])
+            && $validated['transaction_date'] !== $validated['date']
+        ) {
+            throw ValidationException::withMessages([
+                'transaction_date' => 'Tanggal transaksi harus sama dengan nilai date jika keduanya dikirim.',
+            ]);
+        }
+
+        $validated['date'] = $validated['transaction_date'] ?? $validated['date'];
+        unset($validated['transaction_date']);
 
         $journal = DB::transaction(fn () => $this->journalService->createJournal($validated, Auth::id()));
 

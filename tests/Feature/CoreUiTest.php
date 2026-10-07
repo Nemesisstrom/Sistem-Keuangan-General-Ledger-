@@ -76,7 +76,7 @@ test('journal entry form posts a balanced entry using the migrated schema', func
 
     $response = $this->post(route('journals.store'), [
         'branch_id' => $branch->id,
-        'date' => '2026-10-07',
+        'transaction_date' => '2026-10-07',
         'description' => 'Setoran modal',
         'items' => [
             ['account_id' => $cash->id, 'debit' => '1000000', 'credit' => '0'],
