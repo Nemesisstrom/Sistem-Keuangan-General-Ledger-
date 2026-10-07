@@ -63,6 +63,7 @@ graph TD
         AS -->|Write Journal Items| JI[(journal_items)]
         AS -->|Update Balances| COA[(chart_of_accounts)]
     end
+```
 🛠️ System Requirements
 PHP: ^8.3
 
