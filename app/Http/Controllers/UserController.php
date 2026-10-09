@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Branch;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -10,118 +11,92 @@ use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
-    /**
-     * Tampilkan daftar seluruh pengguna beserta role-nya.
-     */
     public function index()
     {
-        $users = User::with('roles')->latest()->paginate(10);
-
-        return view('users.index', compact('users'));
+        $users = User::with(['branch', 'roles'])->latest()->paginate(10);
+        return view('admin.users.index', compact('users'));
     }
 
-    /**
-     * Tampilkan form pembuatan pengguna baru.
-     */
     public function create()
     {
-        $roles = Role::pluck('name', 'name');
-
-        return view('users.create', compact('roles'));
+        $branches = Branch::all();
+        $roles = Role::all();
+        return view('admin.users.create', compact('branches', 'roles'));
     }
 
-    /**
-     * Simpan pengguna baru dan assign role.
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name'     => ['required', 'string', 'max:255'],
-            'email'    => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'role'     => ['required', 'string', 'exists:roles,name'],
-        ], [
-            'name.required'     => 'Nama lengkap wajib diisi.',
-            'email.required'    => 'Alamat email wajib diisi.',
-            'email.unique'      => 'Email sudah terdaftar.',
-            'password.required' => 'Kata sandi wajib diisi.',
-            'password.min'      => 'Kata sandi minimal 8 karakter.',
-            'password.confirmed' => 'Konfirmasi kata sandi tidak cocok.',
-            'role.required'     => 'Role pengguna wajib dipilih.',
+            'name'      => 'required|string|max:255',
+            'email'     => 'required|string|email|max:255|unique:users',
+            'password'  => 'required|string|min:8',
+            'branch_id' => 'nullable|exists:branches,id',
+            'role'      => 'required|exists:roles,name',
         ]);
 
         $user = User::create([
-            'name'     => $validated['name'],
-            'email'    => $validated['email'],
-            'password' => Hash::make($validated['password']),
+            'name'      => $validated['name'],
+            'email'     => $validated['email'],
+            'password'  => Hash::make($validated['password']),
+            'branch_id' => $validated['branch_id'],
+            'is_active' => true,
         ]);
 
         $user->assignRole($validated['role']);
 
-        return redirect()->route('users.index')
-            ->with('success', 'Pengguna ' . $user->name . ' berhasil ditambahkan.');
+        return redirect()->route('users.index')->with('success', 'User berhasil ditambahkan.');
     }
 
-    /**
-     * Tampilkan form edit pengguna dan role.
-     */
     public function edit(User $user)
     {
-        $roles = Role::pluck('name', 'name');
-        $userRole = $user->roles->pluck('name')->first();
-
-        return view('users.edit', compact('user', 'roles', 'userRole'));
+        $branches = Branch::all();
+        $roles = Role::all();
+        return view('admin.users.edit', compact('user', 'branches', 'roles'));
     }
 
-    /**
-     * Perbarui data pengguna dan role.
-     */
     public function update(Request $request, User $user)
     {
         $validated = $request->validate([
-            'name'     => ['required', 'string', 'max:255'],
-            'email'    => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
-            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
-            'role'     => ['required', 'string', 'exists:roles,name'],
-        ], [
-            'name.required'  => 'Nama lengkap wajib diisi.',
-            'email.required' => 'Alamat email wajib diisi.',
-            'email.unique'   => 'Email sudah digunakan oleh akun lain.',
-            'password.min'   => 'Kata sandi minimal 8 karakter.',
-            'role.required'  => 'Role pengguna wajib dipilih.',
+            'name'      => 'required|string|max:255',
+            'email'     => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'password'  => 'nullable|string|min:8',
+            'branch_id' => 'nullable|exists:branches,id',
+            'role'      => 'required|exists:roles,name',
+            'is_active' => 'required|boolean',
         ]);
 
         $userData = [
-            'name'  => $validated['name'],
-            'email' => $validated['email'],
+            'name'      => $validated['name'],
+            'email'     => $validated['email'],
+            'branch_id' => $validated['branch_id'],
+            'is_active' => $validated['is_active'],
         ];
 
-        // Hanya update password jika diisi
-        if ($request->filled('password')) {
+        if (!empty($validated['password'])) {
             $userData['password'] = Hash::make($validated['password']);
         }
 
         $user->update($userData);
         $user->syncRoles([$validated['role']]);
 
-        return redirect()->route('users.index')
-            ->with('success', 'Data pengguna ' . $user->name . ' berhasil diperbarui.');
+        return redirect()->route('users.index')->with('success', 'Data user berhasil diperbarui.');
     }
 
-    /**
-     * Hapus pengguna dari sistem.
-     */
-        public function destroy(User $user)
+    public function destroy(User $user)
 {
-        // Mencegah pengguna menghapus akunnya sendiri
-        if (request()->user()->id === $user->id) {
-            return back()->with('error', 'Anda tidak dapat menghapus akun Anda sendiri.');
-        }
-
-        $userName = $user->name;
-        $user->delete();
-
-        return redirect()->route('users.index')
-            ->with('success', 'Pengguna ' . $userName . ' berhasil dihapus.');
+    // 1. Cegah pengguna menghapus akunnya sendiri
+    if ($user->id === auth()->id) {
+        return back()->with('error', 'Anda tidak dapat menghapus akun Anda sendiri.');
     }
+
+    // 2. (Opsional) Cegah penghapusan user yang sudah memiliki riwayat entri jurnal
+    if ($user->createdJournals()->exists()) {
+        return back()->with('error', 'User tidak dapat dihapus karena memiliki riwayat entri jurnal.');
+    }
+
+    // 3. Proses hapus user
+    $user->delete();
+
+    return redirect()->route('users.index')->with('success', 'User berhasil dihapus.');
+}
 }

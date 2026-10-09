@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Auth\Reports;
 
+use App\Http\Controllers\Controller;
 use App\Models\Branch;
 use App\Models\JournalItem;
 use Illuminate\Http\Request;

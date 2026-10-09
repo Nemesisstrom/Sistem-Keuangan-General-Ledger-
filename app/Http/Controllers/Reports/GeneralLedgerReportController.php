@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Reports;
 
+use App\Http\Controllers\Controller;
 use App\Models\Branch;
 use App\Models\ChartOfAccount;
 use App\Models\JournalItem;
@@ -20,9 +21,8 @@ class GeneralLedgerReportController extends Controller
 
         $branchId  = $filters['branch_id'] ?? null;
         $accountId = $filters['account_id'] ?? null;
-        $startDate = $filters['start_date'] ?? now()->startOfMonth()->toDateString();
-        $endDate   = $filters['end_date'] ?? now()->endOfMonth()->toDateString();
-
+        $startDate = $request->input('start_date', now()->startOfMonth()->toDateString());
+        $endDate = $request->input('end_date', now()->endOfMonth()->toDateString());
         $branches = Branch::where('is_active', true)->get();
         $accounts = ChartOfAccount::where('is_active', true)
             ->orderBy('code')

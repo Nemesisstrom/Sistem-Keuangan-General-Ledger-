@@ -1,7 +1,9 @@
 @extends('layouts.app')
+
 @section('title', 'Buku Besar')
 @section('page-title', 'Buku Besar')
 @section('page-subtitle', 'Telusuri mutasi debit, kredit, dan saldo per akun.')
+
 @section('content')
     <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <!-- Header Page -->
@@ -10,7 +12,7 @@
                 <h1 class="text-2xl font-bold text-gray-800">Laporan Buku Besar (General Ledger)</h1>
                 <p class="text-sm text-gray-600">Rincian mutasi transaksi per akun COA dan cabang</p>
             </div>
-            @if($selectedAccount && $journalItems->count() > 0)
+            @if(isset($selectedAccount) && isset($journalItems) && $journalItems->count() > 0)
                 <button onclick="window.print()" class="px-4 py-2 bg-gray-800 text-white text-sm rounded-md hover:bg-gray-700">
                     🖨️ Cetak / PDF
                 </button>
@@ -26,7 +28,7 @@
                     <select name="branch_id" class="w-full border-gray-300 rounded-md text-sm focus:ring-indigo-500 focus:border-indigo-500">
                         <option value="">-- Semua Cabang --</option>
                         @foreach($branches as $branch)
-                            <option value="{{ $branch->id }}" {{ $branchId == $branch->id ? 'selected' : '' }}>
+                            <option value="{{ $branch->id }}" {{ ($branchId ?? '') == $branch->id ? 'selected' : '' }}>
                                 {{ $branch->code }} - {{ $branch->name }}
                             </option>
                         @endforeach
@@ -39,7 +41,7 @@
                     <select name="account_id" required class="w-full border-gray-300 rounded-md text-sm focus:ring-indigo-500 focus:border-indigo-500">
                         <option value="">-- Pilih Akun Rekening --</option>
                         @foreach($accounts as $acc)
-                            <option value="{{ $acc->id }}" {{ $accountId == $acc->id ? 'selected' : '' }}>
+                            <option value="{{ $acc->id }}" {{ ($accountId ?? '') == $acc->id ? 'selected' : '' }}>
                                 {{ $acc->code }} - {{ $acc->name }}
                             </option>
                         @endforeach
@@ -49,14 +51,14 @@
                 <!-- Tanggal Mulai -->
                 <div>
                     <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Dari Tanggal</label>
-                    <input type="date" name="start_date" value="{{ $startDate }}" class="w-full border-gray-300 rounded-md text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                    <input type="date" name="start_date" value="{{ $startDate ?? now()->startOfMonth()->toDateString() }}" class="w-full border-gray-300 rounded-md text-sm focus:ring-indigo-500 focus:border-indigo-500">
                 </div>
 
                 <!-- Tanggal Selesai & Button -->
                 <div>
                     <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Sampai Tanggal</label>
                     <div class="flex gap-2">
-                        <input type="date" name="end_date" value="{{ $endDate }}" class="w-full border-gray-300 rounded-md text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                        <input type="date" name="end_date" value="{{ $endDate ?? now()->endOfMonth()->toDateString() }}" class="w-full border-gray-300 rounded-md text-sm focus:ring-indigo-500 focus:border-indigo-500">
                         <button type="submit" class="px-5 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700">
                             Tampilkan
                         </button>
@@ -66,7 +68,7 @@
         </div>
 
         <!-- Tabel Laporan Buku Besar -->
-        @if($selectedAccount)
+        @if(isset($selectedAccount))
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                 <!-- Info Akun Header -->
                 <div class="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
@@ -96,7 +98,7 @@
                         <tbody>
                             <!-- Baris Saldo Awal -->
                             @php
-                                $runningBalance = $openingBalance;
+                                $runningBalance = $openingBalance ?? 0;
                                 $totalDebit = 0;
                                 $totalCredit = 0;
                             @endphp
@@ -125,7 +127,7 @@
                                 <tr class="border-b hover:bg-gray-50">
                                     <td class="p-3 border-r">{{ $item->journalEntry->date }}</td>
                                     <td class="p-3 border-r font-mono text-xs text-indigo-600">{{ $item->journalEntry->entry_number }}</td>
-                                    <td class="p-3 border-r"><span class="px-2 py-0.5 bg-gray-200 text-gray-800 rounded text-xs font-semibold">{{ $item->journalEntry->branch->code }}</span></td>
+                                    <td class="p-3 border-r"><span class="px-2 py-0.5 bg-gray-200 text-gray-800 rounded text-xs font-semibold">{{ $item->journalEntry->branch->code ?? '-' }}</span></td>
                                     <td class="p-3 border-r">{{ $item->description ?: $item->journalEntry->description }}</td>
                                     <td class="p-3 border-r text-right">{{ $debit > 0 ? number_format($debit, 2, ',', '.') : '-' }}</td>
                                     <td class="p-3 border-r text-right">{{ $credit > 0 ? number_format($credit, 2, ',', '.') : '-' }}</td>
