@@ -6,6 +6,7 @@ use App\Models\Branch;
 use App\Models\ChartOfAccount;
 use App\Models\Journal;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class CashTransactionController extends Controller
@@ -14,7 +15,7 @@ class CashTransactionController extends Controller
     {
         $cashAccounts = ChartOfAccount::where('type', 'asset')->get();
         $revenueAccounts = ChartOfAccount::whereIn('type', ['revenue', 'equity'])->get();
-        $branches = Branch::all(); // Untuk opsi pilihan cabang bagi Admin
+        $branches = Branch::all();
 
         return view('cash.in', compact('cashAccounts', 'revenueAccounts', 'branches'));
     }
@@ -30,13 +31,14 @@ class CashTransactionController extends Controller
             'branch_id'         => 'nullable|exists:branches,id',
         ]);
 
-        // Jika Staff, gunakan branch_id milik user login. Jika Admin, gunakan inputan form (atau fallback ke user branch)
-        $branchId = auth()->user()->branch_id ?? $request->input('branch_id');
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $branchId = $user->branch_id ?? $request->input('branch_id');
 
         DB::transaction(function () use ($validated, $branchId) {
             $journal = Journal::create([
                 'branch_id'        => $branchId,
-                'created_by'       => auth()->id(),
+                'created_by'       => Auth::id(),
                 'transaction_date' => $validated['transaction_date'],
                 'description'      => $validated['description'],
                 'status'           => 'posted',
@@ -77,15 +79,17 @@ class CashTransactionController extends Controller
             'cash_account_id'    => 'required|exists:chart_of_accounts,id',
             'amount'             => 'required|numeric|min:1',
             'description'        => 'required|string|max:255',
-            'branch_id'         => 'nullable|exists:branches,id',
+            'branch_id'          => 'nullable|exists:branches,id',
         ]);
 
-        $branchId = auth()->user()->branch_id ?? $request->input('branch_id');
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $branchId = $user->branch_id ?? $request->input('branch_id');
 
         DB::transaction(function () use ($validated, $branchId) {
             $journal = Journal::create([
                 'branch_id'        => $branchId,
-                'created_by'       => auth()->id(),
+                'created_by'       => Auth::id(),
                 'transaction_date' => $validated['transaction_date'],
                 'description'      => $validated['description'],
                 'status'           => 'posted',

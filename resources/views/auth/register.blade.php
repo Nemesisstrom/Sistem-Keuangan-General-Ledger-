@@ -1,9 +1,9 @@
 @extends('layouts.auth')
 
-@section('title', 'Daftar Akun Baru')
+@section('title', 'Register - SI Keuangan')
 
 @section('content')
-<div class="bg-white rounded-2xl shadow-xl border border-slate-200 p-8">
+<div class="bg-white rounded-2xl shadow-xl border border-slate-200 p-8 w-full max-w-md">
 
     <!-- Header Form -->
     <div class="text-center mb-6">
@@ -12,7 +12,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
             </svg>
         </div>
-        <h1 class="text-2xl font-bold text-slate-800">Daftar Akun Baru</h1>
+        <h1 class="text-2xl font-bold text-slate-800">Pendaftaran Staff</h1>
         <p class="text-xs text-slate-500 mt-1">Sistem Informasi Keuangan (General Ledger)</p>
     </div>
 
@@ -29,6 +29,7 @@
                    value="{{ old('name') }}"
                    required
                    autofocus
+                   autocomplete="name"
                    class="w-full px-4 py-2.5 bg-slate-50 border @error('name') border-red-500 @else border-slate-200 @enderror rounded-xl focus:outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500 text-sm transition-all"
                    placeholder="Nama Pengguna">
 
@@ -45,6 +46,7 @@
                    id="email"
                    value="{{ old('email') }}"
                    required
+                   autocomplete="email"
                    class="w-full px-4 py-2.5 bg-slate-50 border @error('email') border-red-500 @else border-slate-200 @enderror rounded-xl focus:outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500 text-sm transition-all"
                    placeholder="nama@perusahaan.com">
 
@@ -60,6 +62,7 @@
                    name="password"
                    id="password"
                    required
+                   autocomplete="new-password"
                    class="w-full px-4 py-2.5 bg-slate-50 border @error('password') border-red-500 @else border-slate-200 @enderror rounded-xl focus:outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500 text-sm transition-all"
                    placeholder="Minimal 8 karakter">
 
@@ -75,6 +78,7 @@
                    name="password_confirmation"
                    id="password_confirmation"
                    required
+                   autocomplete="new-password"
                    class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500 text-sm transition-all"
                    placeholder="Ulangi kata sandi">
         </div>
@@ -82,16 +86,16 @@
         <!-- Tombol Submit -->
         <button type="submit"
                 class="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-medium text-sm rounded-xl shadow-md shadow-indigo-200 transition-all mt-2">
-            Daftar Sekarang
+            Daftar Akun
         </button>
     </form>
 
     <!-- Navigasi Penghubung ke Halaman Login -->
     <div class="mt-6 border-t border-slate-100 pt-4 text-center">
         <p class="text-xs text-slate-500">
-            Sudah memiliki akun?
+            Sudah punya akun?
             <a href="{{ route('login') }}" class="font-semibold text-indigo-600 hover:text-indigo-800 hover:underline">
-                Masuk di sini
+                Login di sini
             </a>
         </p>
     </div>

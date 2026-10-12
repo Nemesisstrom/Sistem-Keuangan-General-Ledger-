@@ -22,7 +22,7 @@
                 <!-- Logo & Brand -->
                 <div class="flex items-center gap-4">
                     <a href="{{ route('dashboard') }}" class="font-bold text-lg tracking-wider">
-                        SI KEUANGAN
+                        SISTEM KEUANGAN CTC
                     </a>
                 </div>
 

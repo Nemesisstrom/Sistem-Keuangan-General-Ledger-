@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AdjustmentController;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Auth\RegisteredUserController; // <-- Pastikan namespace ini sudah diimport
 use App\Http\Controllers\Reports\BalanceSheetReportController;
 use App\Http\Controllers\BankReconciliationController;
 use App\Http\Controllers\CashTransactionController;
@@ -18,8 +19,9 @@ Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 
-    Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
-    Route::post('/register', [AuthController::class, 'register'])->name('register.post');
+    // DIPERBAIKI: Menggunakan RegisteredUserController
+    Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');
+    Route::post('/register', [RegisteredUserController::class, 'store'])->name('register.post');
 });
 
 // 2. Rute Terproteksi (Wajib Login)

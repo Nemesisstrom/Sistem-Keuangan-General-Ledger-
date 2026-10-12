@@ -33,7 +33,7 @@ class Branch extends Model
 
     public function journals(): HasMany
     {
-        return $this->hasMany(Journal::class);
+        return $this->hasMany(Journal::class );
     }
 
     public function employees(): HasMany

@@ -15,21 +15,34 @@ class ChartOfAccountController extends Controller
             'search' => ['nullable', 'string', 'max:100'],
         ]);
 
-        $accounts = ChartOfAccount::query()
-            ->with('parent')
-            ->withCount('journalItems')
-            ->when($request->filled('type'), fn ($query) => $query->where('type', $request->type))
-            ->when($request->filled('search'), function ($query) use ($request) {
-                $search = $request->string('search')->trim()->toString();
-                $query->where(fn ($q) => $q
-                    ->where('code', 'like', "%{$search}%")
-                    ->orWhere('name', 'like', "%{$search}%"));
-            })
-            ->orderBy('code')
-            ->paginate(15)
-            ->withQueryString();
+        // Jika user melakukan pencarian atau filter, tampilkan hasil flat (berdasarkan query)
+        if ($request->filled('type') || $request->filled('search')) {
+            $accounts = ChartOfAccount::query()
+                ->with('parent')
+                ->withCount('journalItems')
+                ->when($request->filled('type'), fn ($query) => $query->where('type', $request->type))
+                ->when($request->filled('search'), function ($query) use ($request) {
+                    $search = $request->string('search')->trim()->toString();
+                    $query->where(fn ($q) => $q
+                        ->where('code', 'like', "%{$search}%")
+                        ->orWhere('name', 'like', "%{$search}%"));
+                })
+                ->orderBy('code')
+                ->paginate(15)
+                ->withQueryString();
 
-        return view('accounts.index', compact('accounts'));
+            $isFiltered = true;
+        } else {
+            // Jika tidak ada filter/pencarian, tampilkan struktur hierarki bertingkat penuh (Tree View)
+            $accounts = ChartOfAccount::whereNull('parent_id')
+                ->with(['children.children.children'])
+                ->orderBy('code')
+                ->get();
+
+            $isFiltered = false;
+        }
+
+        return view('accounts.index', compact('accounts', 'isFiltered'));
     }
 
     public function create()
@@ -101,6 +114,7 @@ class ChartOfAccountController extends Controller
 
         $data['type'] = strtolower($data['type']);
         $data['normal_balance'] = strtolower($data['normal_balance']);
+        $data['is_active'] = $request->has('is_active');
 
         return $data;
     }

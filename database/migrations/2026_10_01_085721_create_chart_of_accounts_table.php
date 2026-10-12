@@ -16,6 +16,7 @@ return new class extends Migration
             $table->enum('normal_balance', ['debit', 'credit']);
             $table->foreignId('parent_id')->nullable()->constrained('chart_of_accounts')->nullOnDelete();
             $table->boolean('is_active')->default(true);
+            $table->text('description')->nullable();
             $table->timestamps();
         });
     }

@@ -1,94 +1,189 @@
 @extends('layouts.app')
 
-@section('title', 'Daftar Akun')
-@section('page-title', 'Daftar Akun')
-@section('page-subtitle', 'Kelola struktur akun dan saldo normal perusahaan.')
+@section('title', 'Master Chart of Accounts - SI Keuangan')
 
 @section('content')
-<div class="space-y-6">
-    @if(session('success'))
-        <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">{{ session('success') }}</div>
-    @endif
-    @if(session('error'))
-        <div class="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">{{ session('error') }}</div>
-    @endif
+<div class="py-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-    <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+    <!-- Header & Tombol Tambah -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
-            <p class="text-xs font-semibold uppercase tracking-[.16em] text-emerald-700">Master data</p>
-            <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900">Chart of Accounts</h1>
-            <p class="mt-1 text-sm text-slate-500">Satu sumber terstruktur untuk seluruh pencatatan keuangan.</p>
+            <h1 class="text-2xl font-bold text-slate-800">Master Chart of Accounts (COA)</h1>
+            <p class="text-sm text-slate-500 mt-1">Kelola struktur akun buku besar dan hierarki perusahaan.</p>
         </div>
-        <a href="{{ route('accounts.create') }}" class="inline-flex items-center justify-center gap-2 rounded-xl bg-[#174735] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#103626]">
-            <span class="text-lg leading-none">+</span> Tambah akun
+        <a href="{{ route('accounts.create') }}" class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-xl shadow-sm transition-all">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            Tambah Akun Baru
         </a>
     </div>
 
-    <div class="grid grid-cols-2 gap-3 md:grid-cols-5">
-        @foreach(['asset' => 'Aset', 'liability' => 'Liabilitas', 'equity' => 'Ekuitas', 'revenue' => 'Pendapatan', 'expense' => 'Beban'] as $type => $label)
-            <a href="{{ route('accounts.index', array_merge(request()->except('page'), ['type' => request('type') === $type ? null : $type])) }}"
-               class="rounded-xl border p-4 transition {{ request('type') === $type ? 'border-emerald-700 bg-emerald-50' : 'border-slate-200 bg-white hover:border-emerald-300' }}">
-                <span class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">{{ $label }}</span>
-                <span class="mt-1 block text-sm font-semibold text-slate-800">{{ ucfirst($type) }}</span>
-            </a>
-        @endforeach
+    @if(session('success'))
+        <div class="mb-4 bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-xl text-sm">{{ session('success') }}</div>
+    @endif
+    @if(session('error'))
+        <div class="mb-4 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl text-sm">{{ session('error') }}</div>
+    @endif
+
+    <!-- Form Filter & Pencarian -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6">
+        <form action="{{ route('accounts.index') }}" method="GET" class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Cari Kode / Nama Akun</label>
+                <input type="text" name="search" value="{{ request('search') }}" placeholder="Contoh: 1-1100 atau Kas..." class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Filter Tipe Akun</label>
+                <select name="type" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm">
+                    <option value="">-- Semua Tipe --</option>
+                    <option value="asset" {{ request('type') == 'asset' ? 'selected' : '' }}>Asset</option>
+                    <option value="liability" {{ request('type') == 'liability' ? 'selected' : '' }}>Liability</option>
+                    <option value="equity" {{ request('type') == 'equity' ? 'selected' : '' }}>Equity</option>
+                    <option value="revenue" {{ request('type') == 'revenue' ? 'selected' : '' }}>Revenue</option>
+                    <option value="expense" {{ request('type') == 'expense' ? 'selected' : '' }}>Expense</option>
+                </select>
+            </div>
+            <div class="flex items-center gap-2">
+                <button type="submit" class="flex-1 py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm rounded-xl shadow-md transition-all">Filter</button>
+                <a href="{{ route('accounts.index') }}" class="py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium text-sm rounded-xl transition-all">Reset</a>
+            </div>
+        </form>
     </div>
 
-    <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div class="flex flex-col gap-3 border-b border-slate-100 p-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-                <h2 class="text-sm font-bold text-slate-800">Bagan akun</h2>
-                <p class="mt-0.5 text-xs text-slate-400">{{ $accounts->total() }} akun terdaftar</p>
-            </div>
-            <form method="GET" action="{{ route('accounts.index') }}" class="flex gap-2">
-                @if(request('type'))<input type="hidden" name="type" value="{{ request('type') }}">@endif
-                <input name="search" value="{{ request('search') }}" placeholder="Cari kode atau nama akun" class="w-full rounded-lg border-slate-200 text-sm focus:border-emerald-600 focus:ring-emerald-600 sm:w-64">
-                <button class="rounded-lg border border-slate-200 px-3 text-sm font-medium text-slate-600 hover:bg-slate-50">Cari</button>
-            </form>
-        </div>
+    <!-- Tabel Data Akun -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="w-full min-w-[720px] text-left text-sm">
-                <thead class="bg-slate-50 text-[10px] uppercase tracking-wider text-slate-400">
-                    <tr>
-                        <th class="px-5 py-3">Kode akun</th>
-                        <th class="px-5 py-3">Nama akun</th>
-                        <th class="px-5 py-3">Kategori</th>
-                        <th class="px-5 py-3">Saldo normal</th>
-                        <th class="px-5 py-3">Status</th>
-                        <th class="px-5 py-3 text-right">Aksi</th>
+            <table class="w-full text-left border-collapse text-sm">
+                <thead>
+                    <tr class="bg-slate-50 text-slate-500 uppercase tracking-wider text-xs border-b border-slate-100">
+                        <th class="py-3 px-6 font-semibold">Kode & Nama Akun</th>
+                        <th class="py-3 px-6 font-semibold">Tipe Akun</th>
+                        <th class="py-3 px-6 font-semibold">Saldo Normal</th>
+                        <th class="py-3 px-6 font-semibold text-center">Status</th>
+                        <th class="py-3 px-6 font-semibold text-right">Aksi</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100">
+                <tbody class="divide-y divide-slate-100 text-slate-700">
                     @forelse($accounts as $account)
-                        <tr class="transition hover:bg-slate-50/80">
-                            <td class="whitespace-nowrap px-5 py-4 font-mono text-xs font-semibold text-emerald-800">{{ $account->code }}</td>
-                            <td class="px-5 py-4">
-                                <span class="font-semibold text-slate-800">{{ $account->name }}</span>
-                                @if($account->parent)
-                                    <span class="mt-0.5 block text-xs text-slate-400">Induk: {{ $account->parent->code }} · {{ $account->parent->name }}</span>
-                                @endif
-                            </td>
-                            <td class="px-5 py-4"><span class="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium capitalize text-slate-600">{{ $account->type }}</span></td>
-                            <td class="px-5 py-4 text-xs capitalize text-slate-600">{{ $account->normal_balance }}</td>
-                            <td class="px-5 py-4"><span class="inline-flex items-center gap-1.5 text-xs {{ $account->is_active ? 'text-emerald-700' : 'text-slate-400' }}"><span class="h-1.5 w-1.5 rounded-full {{ $account->is_active ? 'bg-emerald-500' : 'bg-slate-300' }}"></span>{{ $account->is_active ? 'Aktif' : 'Nonaktif' }}</span></td>
-                            <td class="px-5 py-4 text-right">
-                                <a href="{{ route('accounts.show', $account) }}" class="text-xs font-semibold text-emerald-800 hover:underline">Detail</a>
-                                <span class="px-2 text-slate-300">·</span>
-                                <a href="{{ route('accounts.edit', $account) }}" class="text-xs font-semibold text-slate-500 hover:text-slate-800">Ubah</a>
-                                <form action="{{ route('accounts.destroy', $account) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus akun ini?');" class="ml-2 inline">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button class="text-xs font-semibold text-rose-600 hover:underline">Hapus</button>
-                                </form>
+                        <!-- Jika Mode Filter Aktif (Flat List) -->
+                        @if($isFiltered)
+                            <tr class="hover:bg-slate-50/50 transition-colors">
+                                <td class="py-4 px-6 flex items-center gap-2">
+                                    <span class="font-mono font-medium text-slate-900">{{ $account->code }}</span>
+                                    <a href="{{ route('accounts.show', $account->id) }}" class="text-slate-800 hover:text-indigo-600 hover:underline">{{ $account->name }}</a>
+                                </td>
+                                <td class="py-4 px-6 uppercase text-xs">
+                                    <span class="px-2.5 py-1 rounded-full text-xs font-medium
+                                        @if($account->type == 'asset') bg-blue-50 text-blue-700
+                                        @elseif($account->type == 'liability') bg-amber-50 text-amber-700
+                                        @elseif($account->type == 'equity') bg-purple-50 text-purple-700
+                                        @elseif($account->type == 'revenue') bg-emerald-50 text-emerald-700
+                                        @else bg-rose-50 text-rose-700 @endif">
+                                        {{ $account->type }}
+                                    </span>
+                                </td>
+                                <td class="py-4 px-6 uppercase text-xs text-slate-500">{{ $account->normal_balance }}</td>
+                                <td class="py-4 px-6 text-center">
+                                    <span class="px-2 py-0.5 rounded-full text-xs {{ $account->is_active ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700' }}">
+                                        {{ $account->is_active ? 'Aktif' : 'Nonaktif' }}
+                                    </span>
+                                </td>
+                                <td class="py-4 px-6 text-right space-x-2">
+                                    <a href="{{ route('accounts.show', $account->id) }}" class="text-slate-600 hover:text-slate-900 text-xs bg-slate-100 px-2.5 py-1 rounded-lg">Detail</a>
+                                    <a href="{{ route('accounts.edit', $account->id) }}" class="text-indigo-600 hover:text-indigo-900 text-xs bg-indigo-50 px-2.5 py-1 rounded-lg">Edit</a>
+                                </td>
+                            </tr>
+                        @else
+                            <!-- Jika Mode Normal (Hierarki Bertingkat / Tree View) -->
+                            <!-- Level 1: Akun Induk (Parent) -->
+                            <tr class="hover:bg-slate-50/50 transition-colors font-semibold bg-slate-50/30">
+                                <td class="py-4 px-6 flex items-center gap-2">
+                                    <span class="font-mono text-indigo-600">{{ $account->code }}</span>
+                                    <a href="{{ route('accounts.show', $account->id) }}" class="text-slate-900 hover:text-indigo-600 hover:underline">{{ $account->name }}</a>
+                                </td>
+                                <td class="py-4 px-6 uppercase text-xs">
+                                    <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700">{{ $account->type }}</span>
+                                </td>
+                                <td class="py-4 px-6 uppercase text-xs text-slate-500">{{ $account->normal_balance }}</td>
+                                <td class="py-4 px-6 text-center">
+                                    <span class="px-2 py-0.5 rounded-full text-xs {{ $account->is_active ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700' }}">
+                                        {{ $account->is_active ? 'Aktif' : 'Nonaktif' }}
+                                    </span>
+                                </td>
+                                <td class="py-4 px-6 text-right space-x-2">
+                                    <a href="{{ route('accounts.show', $account->id) }}" class="text-slate-600 hover:text-slate-900 text-xs bg-slate-100 px-2.5 py-1 rounded-lg">Detail</a>
+                                    <a href="{{ route('accounts.edit', $account->id) }}" class="text-indigo-600 hover:text-indigo-900 text-xs bg-indigo-50 px-2.5 py-1 rounded-lg">Edit</a>
+                                </td>
+                            </tr>
+
+                            <!-- Level 2: Sub-Akun (Children) -->
+                            @foreach($account->children as $child)
+                                <tr class="hover:bg-slate-50/50 transition-colors">
+                                    <td class="py-3.5 px-6 pl-12 flex items-center gap-2">
+                                        <span class="text-slate-300">└─</span>
+                                        <span class="font-mono font-medium text-slate-700">{{ $child->code }}</span>
+                                        <a href="{{ route('accounts.show', $child->id) }}" class="text-slate-800 hover:text-indigo-600 hover:underline">{{ $child->name }}</a>
+                                    </td>
+                                    <td class="py-3.5 px-6 uppercase text-xs">
+                                        <span class="px-2.5 py-1 rounded-full text-xs font-medium
+                                            @if($child->type == 'asset') bg-blue-50 text-blue-700
+                                            @elseif($child->type == 'liability') bg-amber-50 text-amber-700
+                                            @elseif($child->type == 'equity') bg-purple-50 text-purple-700
+                                            @elseif($child->type == 'revenue') bg-emerald-50 text-emerald-700
+                                            @else bg-rose-50 text-rose-700 @endif">
+                                            {{ $child->type }}
+                                        </span>
+                                    </td>
+                                    <td class="py-3.5 px-6 uppercase text-xs text-slate-500">{{ $child->normal_balance }}</td>
+                                    <td class="py-3.5 px-6 text-center">
+                                        <span class="px-2 py-0.5 rounded-full text-xs {{ $child->is_active ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700' }}">
+                                            {{ $child->is_active ? 'Aktif' : 'Nonaktif' }}
+                                        </span>
+                                    </td>
+                                    <td class="py-3.5 px-6 text-right space-x-2">
+                                        <a href="{{ route('accounts.show', $child->id) }}" class="text-slate-600 hover:text-slate-900 text-xs bg-slate-100 px-2.5 py-1 rounded-lg">Detail</a>
+                                        <a href="{{ route('accounts.edit', $child->id) }}" class="text-indigo-600 hover:text-indigo-900 text-xs bg-indigo-50 px-2.5 py-1 rounded-lg">Edit</a>
+                                    </td>
+                                </tr>
+
+                                <!-- Level 3: Sub-Cucu (Grandchildren) -->
+                                @foreach($child->children as $grandchild)
+                                    <tr class="hover:bg-slate-50/50 transition-colors text-slate-600 text-xs">
+                                        <td class="py-3 px-6 pl-20 flex items-center gap-2">
+                                            <span class="text-slate-300">└─</span>
+                                            <span class="font-mono font-medium text-slate-600">{{ $grandchild->code }}</span>
+                                            <a href="{{ route('accounts.show', $grandchild->id) }}" class="text-slate-700 hover:text-indigo-600 hover:underline">{{ $grandchild->name }}</a>
+                                        </td>
+                                        <td class="py-3 px-6 uppercase">{{ $grandchild->type }}</td>
+                                        <td class="py-3 px-6 uppercase">{{ $grandchild->normal_balance }}</td>
+                                        <td class="py-3 px-6 text-center">
+                                            <span>{{ $grandchild->is_active ? 'Aktif' : 'Nonaktif' }}</span>
+                                        </td>
+                                        <td class="py-3 px-6 text-right space-x-2">
+                                            <a href="{{ route('accounts.show', $grandchild->id) }}" class="text-slate-600 hover:text-slate-900 bg-slate-100 px-2 py-0.5 rounded">Detail</a>
+                                            <a href="{{ route('accounts.edit', $grandchild->id) }}" class="text-indigo-600 hover:text-indigo-900 bg-indigo-50 px-2 py-0.5 rounded">Edit</a>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            @endforeach
+                        @endif
+                    @empty
+                        <tr>
+                            <td colspan="5" class="py-8 text-center text-slate-400 text-sm">
+                                Tidak ada data Chart of Accounts yang ditemukan.
                             </td>
                         </tr>
-                    @empty
-                        <tr><td colspan="6" class="px-5 py-14 text-center"><span class="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-xl text-slate-400">▦</span><p class="mt-3 text-sm font-semibold text-slate-700">Belum ada akun</p><p class="mt-1 text-xs text-slate-400">Tambahkan akun pertama untuk memulai pencatatan.</p></td></tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
-        @if($accounts->hasPages())<div class="border-t border-slate-100 px-5 py-4">{{ $accounts->links() }}</div>@endif
+
+        <!-- Pagination (Hanya muncul saat mode filter aktif) -->
+        @if($isFiltered)
+            <div class="p-4 border-t border-slate-100">
+                {{ $accounts->links() }}
+            </div>
+        @endif
     </div>
+
 </div>
 @endsection
