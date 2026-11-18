@@ -1,90 +1,188 @@
-@extends('layouts.auth')
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Login - CTC General Ledger</title>
 
-@section('title', 'Masuk Ke Sistem')
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
-@section('content')
-<div class="bg-white rounded-2xl shadow-xl border border-slate-200 p-8">
+    <style>
+        [x-cloak] { display: none !important; }
+        
+        /* Smooth GPU-Accelerated Animations */
+        @keyframes floatLogo {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-7px) rotate(1.5deg); }
+        }
+        .animate-float {
+            animation: floatLogo 4s ease-in-out infinite;
+            will-change: transform;
+        }
 
-    <!-- Header Form -->
-    <div class="text-center mb-8">
-        <div class="inline-flex items-center justify-center w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl mb-3">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-            </svg>
+        @keyframes pulseGlow {
+            0%, 100% { opacity: 0.35; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.1); }
+        }
+        .animate-glow-slow {
+            animation: pulseGlow 8s ease-in-out infinite;
+        }
+
+        @keyframes pulseGlowReverse {
+            0%, 100% { opacity: 0.5; transform: scale(1.05); }
+            50% { opacity: 0.25; transform: scale(0.95); }
+        }
+        .animate-glow-reverse {
+            animation: pulseGlowReverse 10s ease-in-out infinite;
+        }
+
+        /* SVG Accounting Grid Pattern Backdrop */
+        .bg-grid-pattern {
+            background-image: radial-gradient(rgba(255, 255, 255, 0.12) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-[#072419] flex items-center justify-center p-4 relative overflow-hidden antialiased select-none">
+
+    {{-- KREATIF BACKGROUND LAYERS --}}
+    <!-- 1. Geometric Grid Overlay -->
+    <div class="absolute inset-0 bg-grid-pattern opacity-60 pointer-events-none"></div>
+
+    <!-- 2. Radial Ambient Glow Blob Top-Left -->
+    <div class="animate-glow-slow absolute -top-28 -left-28 w-96 h-96 bg-[#176B45] rounded-full blur-[120px] pointer-events-none"></div>
+
+    <!-- 3. Vibrant Emerald Glow Blob Bottom-Right -->
+    <div class="animate-glow-reverse absolute -bottom-32 -right-32 w-[30rem] h-[30rem] bg-[#104B35] rounded-full blur-[140px] pointer-events-none"></div>
+
+    <!-- 4. Subtle Gold/Highlight Accent Orb Center Behind Card -->
+    <div class="animate-glow-slow absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-emerald-500/20 rounded-full blur-[100px] pointer-events-none"></div>
+
+    {{-- MAIN FORM CARD --}}
+    <div class="relative z-10 w-full max-w-md bg-white/95 backdrop-blur-xl rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] border border-white/30 p-8 sm:p-9">
+        
+        {{-- Header Logo Interaktif --}}
+        <div class="text-center mb-7">
+            <div class="inline-block relative mb-3 group">
+                <div class="absolute -inset-1.5 bg-gradient-to-r from-emerald-500 to-teal-400 rounded-2xl blur-md group-hover:blur-lg opacity-60 group-hover:opacity-90 transition duration-300"></div>
+                <img 
+                    src="{{ asset('images/Logo_CTC.png') }}" 
+                    alt="Logo CTC" 
+                    class="animate-float relative w-16 h-16 object-contain mx-auto drop-shadow-md"
+                >
+            </div>
+            <h1 class="text-xl font-black tracking-tight text-[#202B25]">CTC General Ledger</h1>
+            <p class="text-xs font-bold text-[#176B45] uppercase tracking-wider mt-0.5">Sistem Keuangan & Payroll</p>
         </div>
-        <h1 class="text-2xl font-bold text-slate-800">Sistem Keuangan</h1>
-        <p class="text-xs text-slate-500 mt-1">General Ledger & Financial Reporting</p>
+
+        {{-- Flash Messages --}}
+        @if (session('success'))
+            <div class="mb-5 bg-[#E8F4EC] border border-[#D5E8DA] text-[#176B45] px-4 py-3 rounded-xl text-xs font-medium flex items-center gap-2">
+                <i class="fa-solid fa-circle-check text-sm shrink-0"></i>
+                <span>{{ session('success') }}</span>
+            </div>
+        @endif
+
+        @if ($errors->any())
+            <div class="mb-5 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-xs font-medium space-y-1">
+                <div class="flex items-center gap-1.5 font-bold mb-1">
+                    <i class="fa-solid fa-circle-exclamation shrink-0"></i>
+                    <span>Terjadi Kesalahan Login</span>
+                </div>
+                <ul class="list-disc list-inside space-y-0.5 text-[11px] opacity-90 pl-1">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        {{-- Form Login --}}
+        <form action="{{ route('login.post') }}" method="POST" class="space-y-4" x-data="{ showPassword: false }">
+            @csrf
+
+            {{-- Input Email --}}
+            <div>
+                <label for="email" class="block text-xs font-bold text-[#526057] mb-1.5">Alamat Email Perusahaan</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400">
+                        <i class="fa-solid fa-envelope text-xs"></i>
+                    </span>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        name="email" 
+                        value="{{ old('email') }}" 
+                        required 
+                        autofocus
+                        placeholder="karyawan@ctc.co.id"
+                        class="w-full pl-10 pr-4 py-2.5 bg-[#F9FBF9] border border-[#E1E8E2] rounded-xl text-xs text-[#202B25] outline-none transition focus:border-[#176B45] focus:bg-white focus:ring-2 focus:ring-[#176B45]/10"
+                    >
+                </div>
+            </div>
+
+            {{-- Input Password + Toggle Show/Hide --}}
+            <div>
+                <label for="password" class="block text-xs font-bold text-[#526057] mb-1.5">Kata Sandi</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400">
+                        <i class="fa-solid fa-lock text-xs"></i>
+                    </span>
+                    <input 
+                        :type="showPassword ? 'text' : 'password'" 
+                        id="password" 
+                        name="password" 
+                        required
+                        placeholder="••••••••"
+                        class="w-full pl-10 pr-10 py-2.5 bg-[#F9FBF9] border border-[#E1E8E2] rounded-xl text-xs text-[#202B25] outline-none transition focus:border-[#176B45] focus:bg-white focus:ring-2 focus:ring-[#176B45]/10"
+                    >
+                    <button 
+                        type="button" 
+                        @click="showPassword = !showPassword"
+                        class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-gray-400 hover:text-[#176B45] transition focus:outline-none"
+                    >
+                        <i class="fa-solid" :class="showPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
+                    </button>
+                </div>
+            </div>
+
+            {{-- Remember & Forgot Password --}}
+            <div class="flex items-center justify-between pt-1">
+                <label class="flex items-center cursor-pointer">
+                    <input type="checkbox" name="remember" class="w-3.5 h-3.5 rounded border-[#E1E8E2] text-[#176B45] focus:ring-[#176B45]/30">
+                    <span class="ml-2 text-xs font-medium text-[#68756D]">Ingat sesi saya</span>
+                </label>
+                
+                @if (Route::has('password.request'))
+                    <a href="{{ route('password.request') }}" class="text-xs font-bold text-[#176B45] hover:text-[#104B35] transition">
+                        Lupa kata sandi?
+                    </a>
+                @endif
+            </div>
+
+            {{-- Submit Button --}}
+            <button 
+                type="submit"
+                class="w-full bg-[#176B45] hover:bg-[#104B35] active:scale-[0.98] text-white font-bold py-2.5 rounded-xl transition duration-150 shadow-lg shadow-[#176B45]/25 flex items-center justify-center gap-2 text-xs mt-2"
+            >
+                <span>Masuk ke Dashboard</span>
+                <i class="fa-solid fa-arrow-right-to-bracket text-xs"></i>
+            </button>
+        </form>
+
+        {{-- Register Link --}}
+        @if (Route::has('register'))
+            <p class="text-center text-xs text-[#68756D] mt-6 pt-4 border-t border-[#E1E8E2]">
+                Belum memiliki akses akun? 
+                <a href="{{ route('register') }}" class="text-[#176B45] font-bold hover:underline">
+                    Daftar di sini
+                </a>
+            </p>
+        @endif
     </div>
 
-    <!-- Alert Notifikasi Sesi -->
-    @if(session('success'))
-        <div class="mb-5 p-3 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs rounded-lg">
-            {{ session('success') }}
-        </div>
-    @endif
-
-    <!-- Form Login -->
-    <form action="{{ route('login.post') }}" method="POST" class="space-y-5">
-        @csrf
-
-        <!-- Input Email -->
-        <div>
-            <label for="email" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Email</label>
-            <input type="email"
-                   name="email"
-                   id="email"
-                   value="{{ old('email') }}"
-                   required
-                   autofocus
-                   class="w-full px-4 py-2.5 bg-slate-50 border @error('email') border-red-500 @else border-slate-200 @enderror rounded-xl focus:outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm transition-all"
-                   placeholder="nama@perusahaan.com">
-
-            @error('email')
-                <p class="mt-1.5 text-xs text-red-600">{{ $message }}</p>
-            @enderror
-        </div>
-
-        <!-- Input Password -->
-        <div>
-            <label for="password" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Kata Sandi</label>
-            <input type="password"
-                   name="password"
-                   id="password"
-                   required
-                   class="w-full px-4 py-2.5 bg-slate-50 border @error('password') border-red-500 @else border-slate-200 @enderror rounded-xl focus:outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm transition-all"
-                   placeholder="••••••••">
-
-            @error('password')
-                <p class="mt-1.5 text-xs text-red-600">{{ $message }}</p>
-            @enderror
-        </div>
-
-        <!-- Checkbox Remember Me -->
-        <div class="flex items-center justify-between text-sm">
-            <label class="flex items-center text-slate-600 cursor-pointer">
-                <input type="checkbox" name="remember" class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
-                <span class="ml-2 text-xs">Ingat Saya</span>
-            </label>
-        </div>
-
-        <!-- Tombol Submit -->
-        <button type="submit"
-                class="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-medium text-sm rounded-xl shadow-md shadow-indigo-200 transition-all">
-            Masuk
-        </button>
-    </form>
-    <!-- ... batas akhir form login ... -->
-    </form>
-
-    <!-- Navigasi Penghubung ke Halaman Register -->
-    <div class="mt-6 border-t border-slate-100 pt-4 text-center">
-        <p class="text-xs text-slate-500">
-            Belum memiliki akun?
-            <a href="{{ route('register') }}" class="font-semibold text-indigo-600 hover:text-indigo-800 hover:underline">
-                Daftar sekarang
-            </a>
-        </p>
-    </div>
-
-</div>
-@endsection
+</body>
+</html>

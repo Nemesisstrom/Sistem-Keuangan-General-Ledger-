@@ -3,101 +3,170 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\LoginRequest;
+use App\Http\Requests\Auth\RegisterRequest;
 use App\Models\User;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    /**
-     * Menampilkan form login.
-     */
+    private const REGISTRATION_ROLE = 'staff';
+    private const REGISTRATION_BASE_SALARY = 0;
+
+    // --- WEB UI METHODS ---
     public function showLoginForm()
     {
         return view('auth.login');
     }
 
-    /**
-     * Memproses autentikasi masuk (login).
-     */
-    public function login(Request $request)
-    {
-        $credentials = $request->validate([
-            'email'    => ['required', 'email'],
-            'password' => ['required', 'string'],
-        ], [
-            'email.required'    => 'Alamat email wajib diisi.',
-            'email.email'       => 'Format email tidak valid.',
-            'password.required' => 'Kata sandi wajib diisi.',
-        ]);
-
-        $remember = $request->has('remember');
-
-        if (Auth::attempt($credentials, $remember)) {
-            $request->session()->regenerate();
-
-            return redirect()->intended(route('dashboard'))
-                ->with('success', 'Selamat datang kembali, ' . Auth::user()->name . '!');
-        }
-
-        return back()->withErrors([
-            'email' => 'Email atau kata sandi yang Anda masukkan salah.',
-        ])->onlyInput('email');
-    }
-
-    /**
-     * Menampilkan form registrasi pengguna baru.
-     */
     public function showRegisterForm()
     {
         return view('auth.register');
     }
 
-    /**
-     * Memproses pendaftaran pengguna baru.
-     */
-    public function register(Request $request)
+    public function loginWeb(LoginRequest $request)
     {
-        $validated = $request->validate([
-            'name'     => ['required', 'string', 'max:255'],
-            'email'    => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
-        ], [
-            'name.required'     => 'Nama lengkap wajib diisi.',
-            'email.required'    => 'Alamat email wajib diisi.',
-            'email.email'       => 'Format email tidak valid.',
-            'email.unique'      => 'Email sudah terdaftar.',
-            'password.required' => 'Kata sandi wajib diisi.',
-            'password.min'      => 'Kata sandi minimal 8 karakter.',
-            'password.confirmed'=> 'Konfirmasi kata sandi tidak cocok.',
-        ]);
+        $credentials = $request->only(['email', 'password']);
+        $selectedRole = strtolower($request->input('role', ''));
 
+        if (Auth::attempt($credentials, $request->boolean('remember'))) {
+            $user = Auth::user();
+
+            // Cek apakah status akun aktif (blokir jika non-aktif)
+            if (! $user->is_active) {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+
+                throw ValidationException::withMessages([
+                    'email' => ['Akun Anda telah dinonaktifkan oleh Administrator.'],
+                ]);
+            }
+            
+            // Cek apakah user memiliki role Spatie yang dipilih
+            if (!empty($selectedRole) && !$user->hasRole($selectedRole)) {
+                Auth::logout();
+                $request->session()->invalidate();
+                
+                throw ValidationException::withMessages([
+                    'role' => ['Akun Anda tidak memiliki hak akses sebagai ' . ucfirst($selectedRole) . '.'],
+                ]);
+            }
+
+            // Simpan role aktif di session
+            if (!empty($selectedRole)) {
+                session(['active_role' => $selectedRole]);
+            } else {
+                session(['active_role' => $user->getRoleNames()->first() ?? $user->role]);
+            }
+
+            $request->session()->regenerate();
+
+            // Pemicu event pendaftaran internal menggunakan helper event() bawaan
+            event(new Registered($user));
+
+            return redirect()->route('dashboard')->with('success', 'Selamat datang kembali!');
+        }
+
+        throw ValidationException::withMessages([
+            'email' => __('Email atau password salah.'),
+        ]);
+    }
+
+    public function registerWeb(RegisterRequest $request)
+    {
         $user = User::create([
-            'name'     => $validated['name'],
-            'email'    => $validated['email'],
-            'password' => Hash::make($validated['password']),
+            'name'        => $request->name,
+            'email'       => $request->email,
+            'password'    => Hash::make($request->password),
+            'role'        => self::REGISTRATION_ROLE,
+            'base_salary' => self::REGISTRATION_BASE_SALARY,
+            'is_active'   => true,
         ]);
-        $user->assignRole('Staff');
 
-        // Otomatis login setelah registrasi
+        $user->assignRole(self::REGISTRATION_ROLE);
+
+        // Menggunakan helper event() standar (bukan broadcast())
+        event(new Registered($user));
+
         Auth::login($user);
         $request->session()->regenerate();
 
-        return redirect()->route('dashboard')
-            ->with('success', 'Pendaftaran berhasil! Selamat datang, ' . $user->name . '.');
+        return redirect()->route('verification.notice')
+            ->with('success', 'Registrasi berhasil! Silakan cek email Anda untuk verifikasi akun.');
     }
 
-    /**
-     * Memproses logout pengguna.
-     */
-    public function logout(Request $request)
+    public function logoutWeb(Request $request)
     {
         Auth::logout();
-
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('login')->with('success', 'Anda telah berhasil keluar dari sistem.');
+        return redirect()->route('login')->with('success', 'Berhasil logout.');
+    }
+
+    // --- API METHODS ---
+    public function loginApi(LoginRequest $request)
+    {
+        $validated = $request->validated();
+
+        $user = User::where('email', $validated['email'])->first();
+
+        if (!$user || !Hash::check($validated['password'], $user->password)) {
+            return response()->json(['message' => 'Email atau password salah'], 401);
+        }
+
+        $user->tokens()->delete();
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        return response()->json([
+            'access_token' => $token,
+            'token_type'   => 'Bearer',
+            'user'         => [
+                'id'          => $user->id,
+                'name'        => $user->name,
+                'email'       => $user->email,
+                'role'        => $user->getRoleNames()->first() ?? $user->role,
+                'permissions' => $user->getAllPermissions()->pluck('name'),
+            ]
+        ]);
+    }
+
+    public function registerApi(RegisterRequest $request)
+    {
+        $user = User::create([
+            'name'        => $request->name,
+            'email'       => $request->email,
+            'password'    => Hash::make($request->password),
+            'role'        => self::REGISTRATION_ROLE,
+            'base_salary' => self::REGISTRATION_BASE_SALARY,
+            'is_active'   => true,
+        ]);
+
+        $user->assignRole(self::REGISTRATION_ROLE);
+
+        event(new Registered($user));
+
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        return response()->json([
+            'message'      => 'Registrasi berhasil. Silakan cek email untuk verifikasi.',
+            'access_token' => $token,
+            'token_type'   => 'Bearer',
+            'user'         => $user
+        ], 201);
+    }
+
+    public function logoutApi(Request $request)
+    {
+        $request->user()->currentAccessToken()->delete();
+
+        return response()->json([
+            'message' => 'Berhasil logout dan menghapus token API.'
+        ]);
     }
 }

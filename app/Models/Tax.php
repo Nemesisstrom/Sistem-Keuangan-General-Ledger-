@@ -2,11 +2,9 @@
 
 namespace App\Models;
 
-use App\Models\TaxLog;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Tax extends Model
 {
@@ -15,24 +13,21 @@ class Tax extends Model
     protected $fillable = [
         'code',
         'name',
-        'category',
+        'type',
         'rate',
         'account_id',
         'is_active',
+        'description',
     ];
 
     protected $casts = [
-        'rate' => 'decimal:2',
+        'rate' => 'float',
         'is_active' => 'boolean',
     ];
 
+    // COA Penampung Pajak
     public function account(): BelongsTo
     {
         return $this->belongsTo(ChartOfAccount::class, 'account_id');
-    }
-
-    public function taxLogs(): HasMany
-    {
-        return $this->hasMany(TaxLog::class);
     }
 }

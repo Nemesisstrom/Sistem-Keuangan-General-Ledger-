@@ -2,25 +2,24 @@
 
 namespace App\Models;
 
-use App\Models\Branch;
-use App\Models\Journal;
+// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Spatie\Permission\Traits\HasRoles;
+use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Traits\HasRoles; // Trait Spatie
 
-class User extends Authenticatable
+class User extends Authenticatable // implements MustVerifyEmail
 {
-    use HasFactory, Notifiable, HasRoles;
+    use HasApiTokens, HasFactory, Notifiable, HasRoles;
 
     protected $fillable = [
-        'branch_id',
-        'name',
-        'email',
-        'password',
-        'is_active',
+    'name',
+    'email',
+    'password',
+    'role',
+    'base_salary',
+    'is_active',
     ];
 
     protected $hidden = [
@@ -28,34 +27,8 @@ class User extends Authenticatable
         'remember_token',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password'          => 'hashed',
-            'is_active'         => 'boolean',
-        ];
-    }
-
-    public function branch(): BelongsTo
-    {
-        return $this->belongsTo(Branch::class);
-    }
-
-    public function createdJournals(): HasMany
-    {
-        return $this->hasMany(Journal::class, 'created_by');
-    }
-
-    /**
-     * Helper Pengecekan Akses Cabang
-     */
-    public function hasAccessToBranch(?int $branchId): bool
-    {
-        if ($this->hasRole('Admin') || $this->can('view-reports-all-branches')) {
-            return true;
-        }
-
-        return (int) $this->branch_id === (int) $branchId;
-    }
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+    ];
 }

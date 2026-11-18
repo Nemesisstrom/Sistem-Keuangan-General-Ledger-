@@ -9,29 +9,32 @@ class ChartOfAccountSeeder extends Seeder
 {
     public function run(): void
     {
+        ChartOfAccount::query()->delete();
+
         // ==========================================
-        // 1. KELOMPOK ASSET (KODE 1-xxxx)
+        // 1. KELOMPOK ASET (ASSETS - Normal Balance: Debit)
         // ==========================================
         $currentAsset = ChartOfAccount::create([
             'code' => '1-1000',
-            'name' => 'Aset Lancar (Current Assets)',
+            'name' => 'Aset Lancar',
             'type' => 'asset',
             'normal_balance' => 'debit',
+            'parent_id' => null,
             'is_active' => true,
         ]);
 
         ChartOfAccount::create([
             'code' => '1-1101',
-            'name' => 'Kas di Kantor',
+            'name' => 'Kas Utama',
             'type' => 'asset',
             'normal_balance' => 'debit',
-            'parent_id' => $currentAsset->id, // Sub-akun dari Aset Lancar
+            'parent_id' => $currentAsset->id,
             'is_active' => true,
         ]);
 
         ChartOfAccount::create([
             'code' => '1-1102',
-            'name' => 'Kas di Bank',
+            'name' => 'Bank BCA Operasional',
             'type' => 'asset',
             'normal_balance' => 'debit',
             'parent_id' => $currentAsset->id,
@@ -47,20 +50,57 @@ class ChartOfAccountSeeder extends Seeder
             'is_active' => true,
         ]);
 
-        // ==========================================
-        // 2. KELOMPOK LIABILITY / KEWAJIBAN (KODE 2-xxxx)
-        // ==========================================
-        $currentLiability = ChartOfAccount::create([
-            'code' => '2-1000',
-            'name' => 'Kewajiban Lancar (Current Liabilities)',
-            'type' => 'liability',
-            'normal_balance' => 'credit',
+        $fixedAsset = ChartOfAccount::create([
+            'code' => '1-2000',
+            'name' => 'Aset Tetap',
+            'type' => 'asset',
+            'normal_balance' => 'debit',
+            'parent_id' => null,
             'is_active' => true,
         ]);
 
         ChartOfAccount::create([
-            'code' => '2-1101',
-            'name' => 'Hutang Usaha',
+            'code' => '1-2100',
+            'name' => 'Peralatan Kantor',
+            'type' => 'asset',
+            'normal_balance' => 'debit',
+            'parent_id' => $fixedAsset->id,
+            'is_active' => true,
+        ]);
+
+        ChartOfAccount::create([
+            'code' => '1-2150',
+            'name' => 'Akumulasi Penyusutan Peralatan',
+            'type' => 'asset',
+            'normal_balance' => 'credit',
+            'parent_id' => $fixedAsset->id,
+            'is_active' => true,
+        ]);
+
+        // ==========================================
+        // 2. KELOMPOK KEWAJIBAN / LIABILITAS (LIABILITIES)
+        // ==========================================
+        $currentLiability = ChartOfAccount::create([
+            'code' => '2-1000',
+            'name' => 'Liabilitas Jangka Pendek',
+            'type' => 'liability',
+            'normal_balance' => 'credit',
+            'parent_id' => null,
+            'is_active' => true,
+        ]);
+
+        ChartOfAccount::create([
+            'code' => '2-1100',
+            'name' => 'Utang Usaha',
+            'type' => 'liability',
+            'normal_balance' => 'credit',
+            'parent_id' => $currentLiability->id,
+            'is_active' => true,
+        ]);
+
+        ChartOfAccount::create([
+            'code' => '2-1200',
+            'name' => 'Utang Gaji',
             'type' => 'liability',
             'normal_balance' => 'credit',
             'parent_id' => $currentLiability->id,
@@ -68,80 +108,137 @@ class ChartOfAccountSeeder extends Seeder
         ]);
 
         // ==========================================
-        // 3. KELOMPOK EQUITY / EKUITAS (KODE 3-xxxx)
+        // 3. KELOMPOK EKUITAS / MODAL (EQUITY)
         // ==========================================
-        $equity = ChartOfAccount::create([
+        $equityParent = ChartOfAccount::create([
             'code' => '3-1000',
-            'name' => 'Ekuitas Pemilik (Equity)',
+            'name' => 'Ekuitas Pemilik',
             'type' => 'equity',
             'normal_balance' => 'credit',
+            'parent_id' => null,
             'is_active' => true,
         ]);
 
         ChartOfAccount::create([
-            'code' => '3-1101',
+            'code' => '3-1100',
             'name' => 'Modal Disetor',
             'type' => 'equity',
             'normal_balance' => 'credit',
-            'parent_id' => $equity->id,
+            'parent_id' => $equityParent->id,
             'is_active' => true,
         ]);
 
         ChartOfAccount::create([
-            'code' => '3-3001',
-            'name' => 'Laba Tahun Berjalan (Current Year Earnings)',
+            'code' => '3-1200',
+            'name' => 'Laba Ditahan',
             'type' => 'equity',
             'normal_balance' => 'credit',
-            'parent_id' => $equity->id,
+            'parent_id' => $equityParent->id,
             'is_active' => true,
         ]);
 
         // ==========================================
-        // 4. KELOMPOK REVENUE / PENDAPATAN (KODE 4-xxxx)
+        // 4. KELOMPOK PENDAPATAN (REVENUE)
         // ==========================================
-        $revenue = ChartOfAccount::create([
+        $revenueParent = ChartOfAccount::create([
             'code' => '4-1000',
-            'name' => 'Pendapatan Usaha (Revenues)',
+            'name' => 'Pendapatan Usaha',
             'type' => 'revenue',
             'normal_balance' => 'credit',
+            'parent_id' => null,
             'is_active' => true,
         ]);
 
         ChartOfAccount::create([
-            'code' => '4-1101',
-            'name' => 'Pendapatan Layanan Jasa',
+            'code' => '4-1100',
+            'name' => 'Pendapatan Jasa Layanan Utama',
             'type' => 'revenue',
             'normal_balance' => 'credit',
-            'parent_id' => $revenue->id,
+            'parent_id' => $revenueParent->id,
             'is_active' => true,
         ]);
 
         // ==========================================
-        // 5. KELOMPOK EXPENSE / BEBAN (KODE 5-xxxx)
+        // 5. KELOMPOK BEBAN (EXPENSE)
         // ==========================================
-        $expense = ChartOfAccount::create([
+        $expenseParent = ChartOfAccount::create([
             'code' => '5-1000',
-            'name' => 'Beban Operasional (Operating Expenses)',
+            'name' => 'Beban Operasional',
             'type' => 'expense',
             'normal_balance' => 'debit',
+            'parent_id' => null,
             'is_active' => true,
         ]);
 
         ChartOfAccount::create([
             'code' => '5-1101',
-            'name' => 'Beban Gaji Karyawan',
+            'name' => 'Beban Gaji & Honorarium Tim',
             'type' => 'expense',
             'normal_balance' => 'debit',
-            'parent_id' => $expense->id,
+            'parent_id' => $expenseParent->id,
             'is_active' => true,
         ]);
 
         ChartOfAccount::create([
             'code' => '5-1102',
-            'name' => 'Beban Sewa & Utilitas',
+            'name' => 'Beban Listrik, Air, & Internet',
             'type' => 'expense',
             'normal_balance' => 'debit',
-            'parent_id' => $expense->id,
+            'parent_id' => $expenseParent->id,
+            'is_active' => true,
+        ]);
+
+        ChartOfAccount::create([
+            'code' => '5-1103',
+            'name' => 'Beban Penyusutan Peralatan',
+            'type' => 'expense',
+            'normal_balance' => 'debit',
+            'parent_id' => $expenseParent->id,
+            'is_active' => true,
+        ]);
+
+        ChartOfAccount::create([
+            'code' => '5-1104',
+            'name' => 'Beban Hosting & Domain',
+            'type' => 'expense',
+            'normal_balance' => 'debit',
+            'parent_id' => $expenseParent->id,
+            'is_active' => true,
+        ]);
+
+        ChartOfAccount::create([
+            'code' => '5-1105',
+            'name' => 'Beban Perlengkapan Kantor (ATK)',
+            'type' => 'expense',
+            'normal_balance' => 'debit',
+            'parent_id' => $expenseParent->id,
+            'is_active' => true,
+        ]);
+
+        ChartOfAccount::create([
+            'code' => '5-1106',
+            'name' => 'Beban Transportasi & Perjalanan',
+            'type' => 'expense',
+            'normal_balance' => 'debit',
+            'parent_id' => $expenseParent->id,
+            'is_active' => true,
+        ]);
+
+        ChartOfAccount::create([
+            'code' => '5-1107',
+            'name' => 'Beban Konsumsi & Jamuan',
+            'type' => 'expense',
+            'normal_balance' => 'debit',
+            'parent_id' => $expenseParent->id,
+            'is_active' => true,
+        ]);
+
+        ChartOfAccount::create([
+            'code' => '5-1108',
+            'name' => 'Beban Sosial & CSR',
+            'type' => 'expense',
+            'normal_balance' => 'debit',
+            'parent_id' => $expenseParent->id,
             'is_active' => true,
         ]);
     }

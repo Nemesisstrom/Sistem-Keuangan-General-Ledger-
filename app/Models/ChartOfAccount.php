@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Models\Tax;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,8 +11,6 @@ class ChartOfAccount extends Model
 {
     use HasFactory;
 
-    protected $table = 'chart_of_accounts';
-
     protected $fillable = [
         'code',
         'name',
@@ -21,42 +18,26 @@ class ChartOfAccount extends Model
         'normal_balance',
         'parent_id',
         'is_active',
-        'description',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
     ];
 
-    /**
-     * Relasi ke Akun Induk (Parent Account)
-     */
+    // Induk Akun (Parent)
     public function parent(): BelongsTo
     {
         return $this->belongsTo(ChartOfAccount::class, 'parent_id');
     }
 
-    /**
-     * Relasi ke Akun Anak (Child Accounts)
-     */
+    // Sub-Akun (Children)
     public function children(): HasMany
     {
-        return $this->hasMany(ChartOfAccount::class, 'parent_id');
+        return $this->hasMany(ChartOfAccount::class, 'parent_id')->orderBy('code', 'asc');
     }
 
-    /**
-     * Relasi ke Item Jurnal Transaksi
-     */
-    public function journalItems(): HasMany
+    public function journalDetails(): HasMany
     {
-        return $this->hasMany(JournalItem::class, 'account_id');
-    }
-
-    /**
-     * Relasi ke Pengaturan Pajak
-     */
-    public function taxes(): HasMany
-    {
-        return $this->hasMany(Tax::class, 'account_id');
+        return $this->hasMany(JournalDetail::class, 'account_id');
     }
 }

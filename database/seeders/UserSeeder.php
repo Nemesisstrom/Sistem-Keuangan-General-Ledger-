@@ -2,33 +2,30 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\User;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
 class UserSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        // 1. Buat Akun Admin Utama
+        // Admin Default
         User::create([
-            'name' => 'Administrator Keuangan',
-            'email' => 'admin@keuangan.com',
-            'password' => Hash::make('admin123'),
-            'role' => 'admin',
-            'is_active' => true,
+            'name'        => 'Administrator',
+            'email'       => 'admin@keuangan.com',
+            'password'    => Hash::make('admin123'),
+            'role'        => 'admin',
+            'base_salary' => 10000000,
         ]);
 
-        // 2. Buat Akun Staff Keuangan
+        // Akuntan Default
         User::create([
-            'name' => 'Taufik Baidawi',
-            'email' => 'accountant@keuangan.com',
-            'password' => Hash::make('password123'),
-            'role' => 'accountant',
-            'is_active' => true,
+            'name'        => 'Akuntan Utama',
+            'email'       => 'akuntan@keuangan.com',
+            'password'    => Hash::make('akuntan123'),
+            'role'        => 'akuntan',
+            'base_salary' => 8000000,
         ]);
     }
 }

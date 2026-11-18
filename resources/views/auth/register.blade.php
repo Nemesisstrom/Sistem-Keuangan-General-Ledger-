@@ -1,104 +1,157 @@
-@extends('layouts.auth')
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Registrasi Karyawan Baru - CTC General Ledger</title>
 
-@section('title', 'Register - SI Keuangan')
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
-@section('content')
-<div class="bg-white rounded-2xl shadow-xl border border-slate-200 p-8 w-full max-w-md">
+    <style>
+        [x-cloak] { display: none !important; }
+        
+        @keyframes floatLogo {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-7px) rotate(1.5deg); }
+        }
+        .animate-float {
+            animation: floatLogo 4s ease-in-out infinite;
+            will-change: transform;
+        }
 
-    <!-- Header Form -->
-    <div class="text-center mb-6">
-        <div class="inline-flex items-center justify-center w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl mb-3">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
-            </svg>
-        </div>
-        <h1 class="text-2xl font-bold text-slate-800">Pendaftaran Staff</h1>
-        <p class="text-xs text-slate-500 mt-1">Sistem Informasi Keuangan (General Ledger)</p>
-    </div>
+        @keyframes pulseGlow {
+            0%, 100% { opacity: 0.35; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.1); }
+        }
+        .animate-glow-slow {
+            animation: pulseGlow 8s ease-in-out infinite;
+        }
 
-    <!-- Form Registrasi -->
-    <form action="{{ route('register.post') }}" method="POST" class="space-y-4">
-        @csrf
+        @keyframes pulseGlowReverse {
+            0%, 100% { opacity: 0.5; transform: scale(1.05); }
+            50% { opacity: 0.25; transform: scale(0.95); }
+        }
+        .animate-glow-reverse {
+            animation: pulseGlowReverse 10s ease-in-out infinite;
+        }
 
-        <!-- Input Nama Lengkap -->
-        <div>
-            <label for="name" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Nama Lengkap</label>
-            <input type="text"
-                   name="name"
-                   id="name"
-                   value="{{ old('name') }}"
-                   required
-                   autofocus
-                   autocomplete="name"
-                   class="w-full px-4 py-2.5 bg-slate-50 border @error('name') border-red-500 @else border-slate-200 @enderror rounded-xl focus:outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500 text-sm transition-all"
-                   placeholder="Nama Pengguna">
+        .bg-grid-pattern {
+            background-image: radial-gradient(rgba(255, 255, 255, 0.12) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-[#072419] flex items-center justify-center p-4 sm:p-6 relative overflow-x-hidden overflow-y-auto antialiased select-none">
 
-            @error('name')
-                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-            @enderror
-        </div>
+    {{-- BACKGROUND LAYERS --}}
+    <div class="fixed inset-0 bg-grid-pattern opacity-60 pointer-events-none"></div>
+    <div class="animate-glow-slow fixed -top-28 -left-28 w-96 h-96 bg-[#176B45] rounded-full blur-[120px] pointer-events-none"></div>
+    <div class="animate-glow-reverse fixed -bottom-32 -right-32 w-[30rem] h-[30rem] bg-[#104B35] rounded-full blur-[140px] pointer-events-none"></div>
+    <div class="animate-glow-slow fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-emerald-500/20 rounded-full blur-[100px] pointer-events-none"></div>
 
-        <!-- Input Email -->
-        <div>
-            <label for="email" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Alamat Email</label>
-            <input type="email"
-                   name="email"
-                   id="email"
-                   value="{{ old('email') }}"
-                   required
-                   autocomplete="email"
-                   class="w-full px-4 py-2.5 bg-slate-50 border @error('email') border-red-500 @else border-slate-200 @enderror rounded-xl focus:outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500 text-sm transition-all"
-                   placeholder="nama@perusahaan.com">
-
-            @error('email')
-                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-            @enderror
-        </div>
-
-        <!-- Input Password -->
-        <div>
-            <label for="password" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Kata Sandi</label>
-            <input type="password"
-                   name="password"
-                   id="password"
-                   required
-                   autocomplete="new-password"
-                   class="w-full px-4 py-2.5 bg-slate-50 border @error('password') border-red-500 @else border-slate-200 @enderror rounded-xl focus:outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500 text-sm transition-all"
-                   placeholder="Minimal 8 karakter">
-
-            @error('password')
-                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-            @enderror
+    {{-- MAIN FORM CARD --}}
+    <div class="relative z-10 w-full max-w-md bg-white/95 backdrop-blur-xl rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] border border-white/30 p-8 sm:p-9 my-8">
+        
+        <div class="text-center mb-6">
+            <div class="inline-block relative mb-2 group">
+                <div class="absolute -inset-1 bg-gradient-to-r from-emerald-500 to-teal-400 rounded-2xl blur-md group-hover:blur-lg opacity-60 transition duration-300"></div>
+                <img src="{{ asset('images/Logo_CTC.png') }}" alt="Logo CTC" class="animate-float relative w-14 h-14 object-contain mx-auto drop-shadow-md">
+            </div>
+            <h1 class="text-lg font-black tracking-tight text-[#202B25]">Pendaftaran Karyawan Baru</h1>
+            <p class="text-xs text-[#68756D] mt-0.5">Lengkapi data untuk pembuatan akun operasional</p>
         </div>
 
-        <!-- Input Konfirmasi Password -->
-        <div>
-            <label for="password_confirmation" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Konfirmasi Kata Sandi</label>
-            <input type="password"
-                   name="password_confirmation"
-                   id="password_confirmation"
-                   required
-                   autocomplete="new-password"
-                   class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500 text-sm transition-all"
-                   placeholder="Ulangi kata sandi">
-        </div>
+        {{-- Safe Error Parsing --}}
+        @if ($errors->any())
+            @php($errorList = $errors->all())
+            <div class="mb-5 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-xs font-medium space-y-1">
+                <div class="flex items-center gap-1.5 font-bold mb-1">
+                    <i class="fa-solid fa-circle-exclamation shrink-0"></i>
+                    <span>Registrasi Gagal</span>
+                </div>
+                <ul class="list-disc list-inside space-y-0.5 text-[11px] opacity-90 pl-1">
+                    @foreach ($errorList as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
 
-        <!-- Tombol Submit -->
-        <button type="submit"
-                class="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-medium text-sm rounded-xl shadow-md shadow-indigo-200 transition-all mt-2">
-            Daftar Akun
-        </button>
-    </form>
+        <form action="{{ route('register.post') }}" method="POST" class="space-y-3.5" x-data="{ showPass: false, showConfirm: false }">
+            @csrf
 
-    <!-- Navigasi Penghubung ke Halaman Login -->
-    <div class="mt-6 border-t border-slate-100 pt-4 text-center">
-        <p class="text-xs text-slate-500">
-            Sudah punya akun?
-            <a href="{{ route('login') }}" class="font-semibold text-indigo-600 hover:text-indigo-800 hover:underline">
-                Login di sini
-            </a>
+            {{-- Nama Lengkap --}}
+            <div>
+                <label for="name" class="block text-xs font-bold text-[#526057] mb-1">Nama Lengkap</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400">
+                        <i class="fa-solid fa-user text-xs"></i>
+                    </span>
+                    <input type="text" id="name" name="name" value="{{ old('name') }}" required
+                        placeholder="Nama sesuai KTP"
+                        class="w-full pl-10 pr-4 py-2 bg-[#F9FBF9] border border-[#E1E8E2] rounded-xl text-xs text-[#202B25] outline-none transition focus:border-[#176B45] focus:bg-white focus:ring-2 focus:ring-[#176B45]/10">
+                </div>
+            </div>
+
+            {{-- Email --}}
+            <div>
+                <label for="email" class="block text-xs font-bold text-[#526057] mb-1">Alamat Email Perusahaan</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400">
+                        <i class="fa-solid fa-envelope text-xs"></i>
+                    </span>
+                    <input type="email" id="email" name="email" value="{{ old('email') }}" required
+                        placeholder="email@ctc.co.id"
+                        class="w-full pl-10 pr-4 py-2 bg-[#F9FBF9] border border-[#E1E8E2] rounded-xl text-xs text-[#202B25] outline-none transition focus:border-[#176B45] focus:bg-white focus:ring-2 focus:ring-[#176B45]/10">
+                </div>
+            </div>
+
+            <p class="text-[10px] text-gray-400">Akun baru akan diberikan akses Staff Operasional. Akses lainnya dikelola oleh administrator.</p>
+
+            {{-- Kata Sandi --}}
+            <div>
+                <label for="password" class="block text-xs font-bold text-[#526057] mb-1">Kata Sandi</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400">
+                        <i class="fa-solid fa-lock text-xs"></i>
+                    </span>
+                    <input :type="showPass ? 'text' : 'password'" id="password" name="password" required placeholder="Minimal 8 karakter"
+                        class="w-full pl-10 pr-10 py-2 bg-[#F9FBF9] border border-[#E1E8E2] rounded-xl text-xs text-[#202B25] outline-none transition focus:border-[#176B45] focus:bg-white focus:ring-2 focus:ring-[#176B45]/10">
+                    <button type="button" @click="showPass = !showPass" class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-gray-400 hover:text-[#176B45]">
+                        <i class="fa-solid" :class="showPass ? 'fa-eye-slash' : 'fa-eye'"></i>
+                    </button>
+                </div>
+            </div>
+
+            {{-- Konfirmasi Kata Sandi --}}
+            <div>
+                <label for="password_confirmation" class="block text-xs font-bold text-[#526057] mb-1">Konfirmasi Kata Sandi</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400">
+                        <i class="fa-solid fa-lock text-xs"></i>
+                    </span>
+                    <input :type="showConfirm ? 'text' : 'password'" id="password_confirmation" name="password_confirmation" required placeholder="Ulangi kata sandi"
+                        class="w-full pl-10 pr-10 py-2 bg-[#F9FBF9] border border-[#E1E8E2] rounded-xl text-xs text-[#202B25] outline-none transition focus:border-[#176B45] focus:bg-white focus:ring-2 focus:ring-[#176B45]/10">
+                    <button type="button" @click="showConfirm = !showConfirm" class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-gray-400 hover:text-[#176B45]">
+                        <i class="fa-solid" :class="showConfirm ? 'fa-eye-slash' : 'fa-eye'"></i>
+                    </button>
+                </div>
+            </div>
+
+            <button type="submit" class="w-full bg-[#176B45] hover:bg-[#104B35] active:scale-[0.98] text-white font-bold py-2.5 rounded-xl transition duration-150 shadow-lg shadow-[#176B45]/25 flex items-center justify-center gap-2 text-xs pt-3">
+                <i class="fa-solid fa-user-plus text-xs"></i>
+                <span>Daftar Akun Baru</span>
+            </button>
+        </form>
+
+        <p class="text-center text-xs text-[#68756D] mt-5 pt-3 border-t border-[#E1E8E2]">
+            Sudah memiliki akun? 
+            <a href="{{ route('login') }}" class="text-[#176B45] font-bold hover:underline">Masuk di sini</a>
         </p>
     </div>
 
-</div>
-@endsection
+</body>
+</html>

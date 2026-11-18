@@ -2,50 +2,45 @@
 
 namespace App\Models;
 
-use App\Traits\BelongsToBranch;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Payroll extends Model
 {
-    use BelongsToBranch, HasFactory;
+    use HasFactory;
 
     protected $fillable = [
-        'employee_id',
-        'branch_id',
-        'journal_entry_id',
+        'user_id',
         'period',
         'basic_salary',
-        'allowances',
-        'deductions',
+        'total_allowance',
+        'total_deduction',
         'pph21_amount',
         'net_salary',
+        'journal_id',
         'status',
-        'paid_at',
+        'created_by',
     ];
 
-    protected $casts = [
-        'basic_salary' => 'decimal:2',
-        'allowances' => 'decimal:2',
-        'deductions' => 'decimal:2',
-        'pph21_amount' => 'decimal:2',
-        'net_salary' => 'decimal:2',
-        'paid_at' => 'datetime',
-    ];
-
-    public function employee(): BelongsTo
+    public function user(): BelongsTo
     {
-        return $this->belongsTo(Employee::class);
+        return $this->belongsTo(User::class);
     }
 
-    public function branch(): BelongsTo
+    public function items(): HasMany
     {
-        return $this->belongsTo(Branch::class);
+        return $this->hasMany(PayrollItem::class);
     }
 
     public function journal(): BelongsTo
     {
-        return $this->belongsTo(Journal::class, 'journal_entry_id');
+        return $this->belongsTo(Journal::class);
+    }
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 }

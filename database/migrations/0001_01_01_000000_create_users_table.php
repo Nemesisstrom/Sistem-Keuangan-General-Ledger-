@@ -15,11 +15,10 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            // Tambahan kolom untuk hak akses sistem keuangan
-            $table->enum('role', ['admin', 'accountant'])->default('accountant');
-            $table->boolean('is_active')->default(true);
+            $table->enum('role', ['admin', 'akuntan', 'staff'])->default('staff');
+            $table->decimal('base_salary', 15, 2)->default(0)->comment('Gaji Pokok Karyawan');
+            $table->timestamp('email_verified_at')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });

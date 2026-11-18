@@ -10,7 +10,6 @@ return new class extends Migration
     {
         Schema::create('journal_entries', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('branch_id')->constrained('branches')->cascadeOnDelete();
             $table->string('entry_number', 50)->unique(); // e.g., JRNL-SR1-202610-0001
             $table->date('date');
             $table->text('description')->nullable();
