@@ -33,7 +33,7 @@ class ProfileController extends Controller
 
         $user->save();
 
-        return redirect()->route('profile.edit')->with('success', 'Profil berhasil diperbarui.');
+        return redirect()->route('profile.edit')->with('success', 'Informasi profil berhasil diperbarui.');
     }
 
     public function updatePassword(Request $request)
@@ -47,6 +47,6 @@ class ProfileController extends Controller
             'password' => Hash::make($validated['password']),
         ]);
 
-        return redirect()->route('profile.edit')->with('success_password', 'Kata sandi berhasil diperbarui.');
+        return redirect()->route('profile.edit')->with('success_password', 'Kata sandi berhasil diubah.');
     }
 }

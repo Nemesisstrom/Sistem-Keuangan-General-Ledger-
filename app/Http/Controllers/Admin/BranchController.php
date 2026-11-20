@@ -10,7 +10,7 @@ class BranchController extends Controller
 {
     public function index()
     {
-        $branches = Branch::withCount(['users'])->latest()->paginate(10);
+        $branches = Branch::withCount('users')->latest()->paginate(10);
         return view('admin.branches.index', compact('branches'));
     }
 
@@ -36,10 +36,10 @@ class BranchController extends Controller
             'name' => 'required|string|max:255',
             'phone' => 'nullable|string|max:25',
             'address' => 'nullable|string',
-            'is_active' => 'boolean',
+            'is_active' => 'nullable|boolean',
         ]);
 
-        $validated['is_active'] = $request->has('is_active');
+        $validated['is_active'] = $request->boolean('is_active');
         $branch->update($validated);
 
         return redirect()->route('admin.branches.index')
@@ -48,9 +48,13 @@ class BranchController extends Controller
 
     public function destroy(Branch $branch)
     {
-        if ($branch->users()->exists()) {
+        if ($branch->users()->exists() || $branch->journals()->exists()) {
             return redirect()->back()
-                ->with('error', 'Cabang tidak dapat dihapus karena masih memiliki pengguna aktif.');
+                ->with('error', 'Cabang tidak dapat dihapus karena masih memiliki data user atau transaksi.');
+        }
+
+        if (session('active_branch_id') == $branch->id) {
+            session()->forget('active_branch_id');
         }
 
         $branch->delete();
