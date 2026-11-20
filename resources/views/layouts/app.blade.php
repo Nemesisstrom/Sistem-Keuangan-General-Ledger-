@@ -247,18 +247,6 @@
                     </a>
                 @endhasanyrole
 
-                {{-- Pengaturan Akun --}}
-                <p class="sidebar-section-label px-3 pt-5 pb-1.5 text-[10px]">Pengaturan</p>
-
-                <a href="{{ route('profile.edit') }}" @if(request()->routeIs('profile.*')) aria-current="page" @endif
-                   class="sidebar-link relative group flex items-center rounded-xl py-2.5 text-xs font-semibold">
-                    <i class="sidebar-icon fa-solid fa-user-gear text-sm w-5 text-center shrink-0"></i>
-                    <span class="sidebar-label">Profil Saya</span>
-                    <div class="sidebar-tooltip hidden absolute left-full ml-3 px-3 py-1.5 bg-slate-900 border border-neutral-700 text-white text-xs font-semibold rounded-xl shadow-xl whitespace-nowrap pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-50">
-                        Profil & Kata Sandi
-                    </div>
-                </a>
-            </nav>
 
             {{-- Profil User Bottom Card --}}
             <div class="border-t border-[var(--sidebar-border)] p-3 shrink-0">
@@ -353,7 +341,7 @@
                     {{-- Badge User Topbar Kanan Atas (Klik untuk ke Halaman Profil) --}}
                     @php($activeRole = auth()->user()->getRoleNames()->first() ?? session('active_role', 'GUEST'))
                     <a href="{{ route('profile.edit') }}" title="Kelola Profil Saya"
-                        class="btn-press inline-flex items-center gap-2 rounded-xl border border-gray-300 dark:border-emerald-800/50 bg-gray-200 dark:bg-emerald-950/60 px-3 py-1.5 text-xs font-semibold shadow-2xs transition-colors hover:opacity-90">
+                        class="btn-press inline-flex items-center gap-2 rounded-xl border px-3 py-1.5 text-xs font-semibold shadow-2xs transition-colors hover:opacity-90 {{ request()->routeIs('profile.*') ? 'border-[#176B45] dark:border-emerald-400 ring-2 ring-[#176B45]/20 bg-emerald-50 dark:bg-emerald-900/60' : 'border-gray-300 dark:border-emerald-800/50 bg-gray-200 dark:bg-emerald-950/60' }}">
                         <span class="hidden sm:inline-block font-bold text-gray-800 dark:text-emerald-300 text-xs max-w-[140px] md:max-w-[200px] lg:max-w-none truncate">
                             Halo, {{ auth()->user()->name }}
                         </span>

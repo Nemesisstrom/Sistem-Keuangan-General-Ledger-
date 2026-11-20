@@ -18,6 +18,7 @@ class User extends Authenticatable // implements MustVerifyEmail
     'email',
     'password',
     'role',
+    'branch_id',
     'base_salary',
     'is_active',
     ];
@@ -31,4 +32,9 @@ class User extends Authenticatable // implements MustVerifyEmail
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
+    }
 }
