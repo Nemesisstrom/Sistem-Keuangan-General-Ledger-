@@ -21,7 +21,7 @@ trait BelongsToBranch
                 $user = auth()->user();
                 $table = $builder->getQuery()->from;
 
-                if ($user->hasRole('admin')) {
+                if ($user->hasAnyRole(['admin', 'akuntan'])) {
                     if (session()->has('active_branch_id') && session('active_branch_id')) {
                         $builder->where("{$table}.branch_id", session('active_branch_id'));
                     }

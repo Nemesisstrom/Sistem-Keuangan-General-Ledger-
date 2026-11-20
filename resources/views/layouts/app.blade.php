@@ -110,7 +110,7 @@
                     </div>
                 </a>
 
-                {{-- Master Data --}}
+                {{-- Master Data (Khusus Admin) --}}
                 @role('admin')
                     <p class="sidebar-section-label px-3 pt-5 pb-1.5 text-[10px]">Master Data</p>
 
@@ -247,6 +247,7 @@
                     </a>
                 @endhasanyrole
 
+            </nav>
 
             {{-- Profil User Bottom Card --}}
             <div class="border-t border-[var(--sidebar-border)] p-3 shrink-0">
@@ -299,8 +300,8 @@
                 </div>
 
                 <div class="flex items-center justify-end gap-2.5 shrink-0">
-                    {{-- Switcher Cabang Aktif (Khusus Admin) --}}
-                    @role('admin')
+                    {{-- Switcher Cabang Aktif (Admin & Akuntan untuk Konsolidasi) --}}
+                    @hasanyrole('admin|akuntan')
                         @php($navBranches = \App\Models\Branch::where('is_active', true)->orderBy('name')->get())
                         @if($navBranches->isNotEmpty())
                             <form action="{{ route('admin.switch-branch') }}" method="POST" class="hidden md:flex items-center">
@@ -309,7 +310,7 @@
                                     <i class="fa-solid fa-code-branch text-[11px] text-[#176B45] dark:text-emerald-400 absolute left-3 pointer-events-none"></i>
                                     <select name="branch_id" onchange="this.form.submit()" aria-label="Pilih Cabang Aktif"
                                         class="h-9 rounded-xl border border-[var(--border-color)] bg-[var(--surface)] pl-8 pr-7 text-xs font-semibold text-[var(--text-primary)] focus:border-[#176B45] focus:outline-none cursor-pointer">
-                                        <option value="">Semua Cabang</option>
+                                        <option value="">Semua Cabang (Konsolidasi)</option>
                                         @foreach($navBranches as $navBranch)
                                             <option value="{{ $navBranch->id }}" {{ session('active_branch_id') == $navBranch->id ? 'selected' : '' }}>
                                                 {{ $navBranch->code }} - {{ $navBranch->name }}
@@ -320,14 +321,14 @@
                             </form>
                         @endif
                     @else
-                        {{-- Info Cabang untuk Non-Admin (Akuntan / Staff) --}}
+                        {{-- Info Cabang Terkunci untuk Staff --}}
                         @if(auth()->user()->branch)
                             <div class="hidden md:inline-flex items-center gap-1.5 rounded-xl border border-[var(--border-color)] bg-[var(--surface)] px-3 py-1.5 text-xs font-semibold text-[var(--text-secondary)]">
                                 <i class="fa-solid fa-location-dot text-[#176B45] dark:text-emerald-400 text-[11px]"></i>
                                 <span>{{ auth()->user()->branch->name }}</span>
                             </div>
                         @endif
-                    @endrole
+                    @endhasanyrole
 
                     {{-- Dual Theme Switcher Toggle (Light/Dark) --}}
                     <button type="button" @click="toggleTheme()" title="Ubah Tema (Light/Dark)"

@@ -168,4 +168,4 @@
         openModal('modalEditBranch');
     }
 </script>
-@endsections
+@endsection

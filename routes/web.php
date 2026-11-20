@@ -99,17 +99,6 @@ Route::middleware('auth')->group(function () {
             Route::resource('branches', BranchController::class)->except(['create', 'edit', 'show']);
             Route::resource('chart-of-accounts', ChartOfAccountController::class);
 
-            // Ganti Cabang Aktif (Switch Branch untuk Admin)
-            Route::post('switch-branch', function (Request $request) {
-                if ($request->filled('branch_id')) {
-                    $request->validate(['branch_id' => 'exists:branches,id']);
-                    session(['active_branch_id' => $request->branch_id]);
-                } else {
-                    session()->forget('active_branch_id'); // Reset ke Semua Cabang
-                }
-                return redirect()->back()->with('success', 'Filter cabang aktif berhasil diperbarui.');
-            })->name('switch-branch');
-
             // Tutup Buku Akhir Tahun (Closing Entry)
             Route::post('closing-year-end', [ClosingController::class, 'store'])->name('closing.year-end');
 
@@ -117,6 +106,18 @@ Route::middleware('auth')->group(function () {
             Route::delete('cash-transactions/{id}', [CashTransactionController::class, 'destroy'])->name('cash-transactions.destroy');
             Route::delete('bank-reconciliations/{id}', [BankReconciliationController::class, 'destroy'])->name('bank-reconciliations.destroy');
             Route::delete('payrolls/{id}', [PayrollController::class, 'destroy'])->name('payrolls.destroy');
+        });
+
+        // Ganti Cabang Aktif (Admin & Akuntan untuk Konsolidasi / Filter Cabang)
+        Route::middleware('role:admin|akuntan')->group(function () {
+            Route::post('switch-branch', function (Request $request) {
+                if ($request->filled('branch_id')) {$request->validate(['branch_id' => 'exists:branches,id']);
+                    session(['active_branch_id' => $request->branch_id]);
+                } else {
+                    session()->forget('active_branch_id'); // Reset ke Semua Cabang (Konsolidasi)
+                }
+                return redirect()->back()->with('success', 'Filter cabang aktif berhasil diperbarui.');
+            })->name('switch-branch');
         });
 
         // Modul Jurnal Umum & Reversal
